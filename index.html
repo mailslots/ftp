@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ระบบลงทะเบียนปริญญานิพนธ์</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand__logo">🎓</span>
+        <div>
+          <h1 class="brand__title" data-i18n="appTitle">ระบบปริญญานิพนธ์</h1>
+          <p class="brand__subtitle" data-i18n="appSubtitle">Faculty Thesis Portal</p>
+        </div>
+      </div>
+      <nav class="main-nav">
+        <button class="main-nav__item is-active" data-target="home" data-i18n="navHome">หน้าแรก</button>
+        <button class="main-nav__item" data-target="explore" data-i18n="navExplore">หน้าสำรวจหัวข้อ</button>
+        <button class="main-nav__item" data-target="open-registration" data-i18n="navOpen">หน้าลงทะเบียนสอบเปิดหัวข้อ</button>
+        <button class="main-nav__item" data-target="close-registration" data-i18n="navClose">หน้าลงทะเบียนสอบปิดหัวข้อ</button>
+        <button class="main-nav__item" data-target="thesis-registration" data-i18n="navThesis">หน้าลงทะเบียนปริญญานิพนธ์</button>
+      </nav>
+      <div class="language-switcher">
+        <label for="language-select" data-i18n="languageLabel">ภาษา</label>
+        <select id="language-select">
+          <option value="th" selected>ไทย</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+      <div class="year-switcher">
+        <label for="year-select" data-i18n="yearLabel">ปีการศึกษา (พ.ศ.)</label>
+        <select id="year-select"></select>
+      </div>
+    </aside>
+
+    <main class="content">
+      <section id="home" class="view is-active">
+        <header class="view__header">
+          <div>
+            <h2 data-i18n="homeTitle">ภาพรวมการสอบปริญญานิพนธ์</h2>
+            <p class="view__subtitle" data-i18n="homeSubtitle">ตรวจสอบกำหนดการสอบในรูปแบบวัน สัปดาห์ หรือเดือน</p>
+          </div>
+          <div class="calendar-controls">
+            <div class="calendar-controls__group">
+              <label for="calendar-view" data-i18n="calendarViewLabel">แสดงผลปฏิทิน</label>
+              <select id="calendar-view">
+                <option value="month" selected data-i18n="calendarMonth">มุมมองเดือน</option>
+                <option value="week" data-i18n="calendarWeek">มุมมองสัปดาห์</option>
+                <option value="day" data-i18n="calendarDay">มุมมองวัน</option>
+              </select>
+            </div>
+            <div class="calendar-controls__group">
+              <button id="prev-period" class="ghost-button" aria-label="Previous period">◀</button>
+              <div class="current-period" id="current-period"></div>
+              <button id="next-period" class="ghost-button" aria-label="Next period">▶</button>
+            </div>
+          </div>
+        </header>
+
+        <div class="calendar-layout">
+          <div class="calendar-panel">
+            <div id="calendar-grid" class="calendar-grid"></div>
+          </div>
+          <aside class="day-panel">
+            <h3 data-i18n="dayViewTitle">รายละเอียดวันสอบ</h3>
+            <div id="day-summary" class="day-summary"></div>
+            <div id="day-exams" class="day-exams"></div>
+          </aside>
+        </div>
+
+        <section class="exam-list">
+          <h3 data-i18n="examListTitle">กำหนดการสอบทั้งหมดในปีการศึกษานี้</h3>
+          <div id="exam-cards" class="exam-cards"></div>
+        </section>
+      </section>
+
+      <section id="explore" class="view">
+        <header class="view__header">
+          <div>
+            <h2 data-i18n="exploreTitle">ลงทะเบียนเพื่อสำรวจหัวข้อ</h2>
+            <p class="view__subtitle" data-i18n="exploreSubtitle">แจ้งความสนใจหัวข้อและอาจารย์ที่ปรึกษา</p>
+          </div>
+        </header>
+
+        <div class="form-card">
+          <h3 data-i18n="exploreFormTitle">บันทึกความสนใจ</h3>
+          <form id="explore-form" class="form">
+            <div class="form__row">
+              <label for="explore-students" data-i18n="exploreStudentsLabel">รายชื่อนักศึกษา</label>
+              <div class="multi-input">
+                <select id="explore-students" name="students" multiple>
+                  <option value="" disabled data-i18n="exploreStudentsPlaceholder">เลือกหลายรายชื่อ</option>
+                </select>
+                <div class="multi-input__append">
+                  <input id="explore-new-student" type="text" placeholder="" />
+                  <button type="button" id="explore-add-student" class="ghost-button" data-i18n="addStudent">เพิ่มชื่อ</button>
+                </div>
+              </div>
+              <p class="form__hint" data-i18n="exploreStudentsHint">กดค้างที่ Ctrl / Command เพื่อเลือกหลายชื่อ หรือพิมพ์ชื่อใหม่แล้วกดปุ่มเพิ่มชื่อ</p>
+            </div>
+            <div class="form__row">
+              <label for="explore-thesis" data-i18n="exploreThesisLabel">หัวข้อปริญญานิพนธ์ที่สนใจ</label>
+              <input id="explore-thesis" type="text" required placeholder="" />
+            </div>
+            <div class="form__row">
+              <label for="explore-advisor" data-i18n="exploreAdvisorLabel">อาจารย์ที่ปรึกษาที่สนใจ</label>
+              <select id="explore-advisor" required></select>
+            </div>
+            <div class="form__row">
+              <label for="explore-type" data-i18n="exploreTypeLabel">ประเภทปริญญานิพนธ์</label>
+              <select id="explore-type" required>
+                <option value="still" data-i18n="thesisTypeStill">ภาพนิ่ง</option>
+                <option value="motion" data-i18n="thesisTypeMotion">ภาพเคลื่อนไหว</option>
+                <option value="audio" data-i18n="thesisTypeAudio">เสียง</option>
+                <option value="content" data-i18n="thesisTypeContent">คอนเทนต์</option>
+              </select>
+            </div>
+            <div class="form__actions">
+              <button type="submit" class="primary-button" data-i18n="saveInterest">บันทึกความสนใจ</button>
+              <button type="reset" class="ghost-button" data-i18n="clearForm">ล้างข้อมูล</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="form-card">
+          <h3 data-i18n="exploreManageTitle">ตรวจสอบ/แก้ไขข้อมูล</h3>
+          <form id="search-form" class="form form--inline">
+            <div class="form__row">
+              <label for="search-student" data-i18n="searchLabel">ค้นหาด้วยชื่อนักศึกษา</label>
+              <input id="search-student" type="text" placeholder="" required />
+            </div>
+            <div class="form__actions">
+              <button type="submit" class="primary-button" data-i18n="searchButton">ค้นหา</button>
+            </div>
+          </form>
+          <div id="search-results" class="search-results"></div>
+        </div>
+
+        <section class="table-card">
+          <div class="table-card__header">
+            <h3 data-i18n="exploreListTitle">รายการความสนใจในปีการศึกษาที่เลือก</h3>
+            <p class="view__subtitle" data-i18n="exploreListSubtitle">แก้ไขหรืออัปเดตข้อมูลได้ตลอดเวลา</p>
+          </div>
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th data-i18n="tableThesis">หัวข้อ</th>
+                  <th data-i18n="tableStudents">รายชื่อนักศึกษา</th>
+                  <th data-i18n="tableAdvisor">อาจารย์ที่ปรึกษา</th>
+                  <th data-i18n="tableType">ประเภท</th>
+                  <th data-i18n="tableActions">การจัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="explore-table-body"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section id="open-registration" class="view placeholder">
+        <div class="placeholder__content">
+          <h2 data-i18n="underConstructionTitle">อยู่ระหว่างปรับปรุง</h2>
+          <p data-i18n="underConstructionText">ฟีเจอร์นี้กำลังถูกพัฒนา</p>
+        </div>
+      </section>
+
+      <section id="close-registration" class="view placeholder">
+        <div class="placeholder__content">
+          <h2 data-i18n="underConstructionTitle">อยู่ระหว่างปรับปรุง</h2>
+          <p data-i18n="underConstructionText">ฟีเจอร์นี้กำลังถูกพัฒนา</p>
+        </div>
+      </section>
+
+      <section id="thesis-registration" class="view placeholder">
+        <div class="placeholder__content">
+          <h2 data-i18n="underConstructionTitle">อยู่ระหว่างปรับปรุง</h2>
+          <p data-i18n="underConstructionText">ฟีเจอร์นี้กำลังถูกพัฒนา</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="script.js" type="module"></script>
+</body>
+</html>
