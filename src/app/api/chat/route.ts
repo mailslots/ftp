@@ -20,6 +20,7 @@ type ChatIntent =
   | { type: "mental_health"; query: string }
   | { type: "insurance"; query: string }
   | { type: "retire"; query: string }
+  | { type: "academic_calendar"; query: string }
   | { type: "orientation"; query: string }
   | { type: "camera_purchase"; query: string }
   | { type: "knowledge"; query: string }
@@ -98,7 +99,18 @@ function isCameraPurchaseQuestion(question: string) {
   );
 }
 
+function isAcademicCalendarQuestion(question: string) {
+  const lower = question.toLowerCase();
+  const compact = lower.replace(/\s+/g, "");
+  const hasCalendarTerm =
+    /ปฏิทิน|เปิดเทอม|เปิดภาคเรียน|ปิดเทอม|วันสุดท้ายของภาค|สอบกลางภาค|สอบปลายภาค|ขอจบ|ขอสำเร็จ|สําเร็จการศึกษา|สำเร็จการศึกษา|ขึ้นทะเบียนบัณฑิต|english exit|ลงทะเบียน|เพิ่มถอน|เพิ่ม-ถอน|ชำระเงิน|ชาระเงิน|ค่าปรับ|วันหยุด|สงกรานต์/.test(lower);
+  const hasAcademicYear = /2569|2570|1\/2569|2\/2569|ภาค\s*1|ภาค\s*2|เทอม\s*1|เทอม\s*2|ฤดูร้อน|ซัมเมอร์|summer/.test(lower);
+  const asksDate = /วันไหน|เมื่อไหร่|กี่วัน|วันที่|ช่วงไหน|ถึงวันไหน|ตั้งแต่/.test(lower);
+  return hasCalendarTerm && (hasAcademicYear || asksDate || compact.includes("ปฏิทินการศึกษา"));
+}
+
 function isKnowledgeIntent(question: string) {
+  if (isAcademicCalendarQuestion(question)) return true;
   const lower = question.toLowerCase();
   return /\d{2}-\d{3}-\d{3}|\u0e04\u0e33\u0e2d\u0e18\u0e34\u0e1a\u0e32\u0e22\u0e23\u0e32\u0e22\u0e27\u0e34\u0e0a\u0e32|\u0e2a\u0e2d\u0e19\u0e2d\u0e30\u0e44\u0e23|\u0e1b\u0e35\s*\d|\u0e40\u0e17\u0e2d\u0e21\s*\d|\u0e40\u0e23\u0e35\u0e22\u0e19\u0e2d\u0e30\u0e44\u0e23|\u0e23\u0e32\u0e22\u0e27\u0e34\u0e0a\u0e32|\u0e27\u0e34\u0e0a\u0e32|\u0e41\u0e1c\u0e19\u0e01\u0e32\u0e23\u0e40\u0e23\u0e35\u0e22\u0e19|retire|\u0e23\u0e35\u0e44\u0e17\u0e23\u0e4c|\u0e1e\u0e49\u0e19\u0e2a\u0e20\u0e32\u0e1e|gpa|\u0e40\u0e01\u0e23\u0e14\u0e40\u0e09\u0e25\u0e35\u0e48\u0e22|\u0e2b\u0e25\u0e31\u0e01\u0e2a\u0e39\u0e15\u0e23|\u0e2b\u0e19\u0e48\u0e27\u0e22\u0e01\u0e34\u0e15|\u0e2d\u0e32\u0e0a\u0e35\u0e1e|\u0e1d\u0e36\u0e01\u0e07\u0e32\u0e19|\u0e2a\u0e2b\u0e01\u0e34\u0e08|\u0e2a\u0e21\u0e31\u0e04\u0e23|\u0e2d\u0e32\u0e08\u0e32\u0e23\u0e22\u0e4c|\u0e1b\u0e23\u0e30\u0e01\u0e31\u0e19|\u0e40\u0e04\u0e23\u0e35\u0e22\u0e14|\u0e40\u0e28\u0e23\u0e49\u0e32|\u0e44\u0e21\u0e48\u0e42\u0e2d\u0e40\u0e04|\u0e04\u0e25\u0e34\u0e19\u0e34\u0e01\u0e01\u0e33\u0e25\u0e31\u0e07\u0e43\u0e08|\u0e01\u0e33\u0e25\u0e31\u0e07\u0e43\u0e08|\u0e2a\u0e38\u0e02\u0e20\u0e32\u0e1e\u0e08\u0e34\u0e15|\u0e08\u0e34\u0e15\u0e27\u0e34\u0e17\u0e22\u0e32|\u0e1b\u0e23\u0e36\u0e01\u0e29\u0e32|\u0e2a\u0e32\u0e22\u0e14\u0e48\u0e27\u0e19|\u0e2b\u0e21\u0e14\u0e44\u0e1f|\u0e01\u0e31\u0e07\u0e27\u0e25|\u0e2a\u0e23\u0e49\u0e32\u0e07\u0e2a\u0e38\u0e02|\u0e04\u0e27\u0e32\u0e21\u0e2a\u0e38\u0e02|\u0e14\u0e39\u0e41\u0e25\u0e43\u0e08|\u0e1e\u0e35\u0e48\u0e40\u0e17\u0e04|take care|technology|hotline|facebook/.test(lower);
 }
@@ -197,6 +209,13 @@ function inferIntent(messages: ChatMessage[], lastUserMessage: string): ChatInte
 
   if (/retire|รีไทร์|พ้นสภาพ|gpa|เกรดเฉลี่ย/.test(lower)) {
     return { type: "retire", query: lastUserMessage };
+  }
+
+  if (isAcademicCalendarQuestion(lastUserMessage)) {
+    return {
+      type: "academic_calendar",
+      query: `ปฏิทินการศึกษา 2569 RMUTT ${lastUserMessage}`,
+    };
   }
 
   if (compact.includes("เปิดเทอม") || compact.includes("เปิดภาคเรียน")) {
@@ -403,6 +422,124 @@ function answerOrientationQuestion(question: string) {
   ].join("\n\n");
 }
 
+function answerAcademicCalendarQuestion(question: string) {
+  if (!isAcademicCalendarQuestion(question)) return null;
+
+  const lower = question.toLowerCase();
+  const compact = lower.replace(/\s+/g, "");
+  const isTerm1 = /1\/2569|ภาค\s*1|เทอม\s*1/.test(lower);
+  const isTerm2 = /2\/2569|ภาค\s*2|เทอม\s*2/.test(lower);
+  const isSummer = /ฤดูร้อน|ซัมเมอร์|summer/.test(lower);
+  const asksOpen = /เปิดเทอม|เปิดภาคเรียน/.test(lower);
+  const asksClose = /ปิดเทอม|วันสุดท้ายของภาค/.test(lower);
+  const asksMidterm = /สอบกลางภาค|กลางภาค/.test(lower);
+  const asksFinal = /สอบปลายภาค|ปลายภาค/.test(lower);
+  const asksGraduation = /ขอจบ|ขอสำเร็จ|สําเร็จการศึกษา|สำเร็จการศึกษา|ขึ้นทะเบียนบัณฑิต|english exit|เอกสารสำเร็จ/.test(lower);
+  const asksRegistration = /ลงทะเบียน|เพิ่มถอน|เพิ่ม-ถอน|ชำระเงิน|ชาระเงิน|ค่าปรับ/.test(lower);
+  const asksHoliday = /วันหยุด|สงกรานต์/.test(lower);
+
+  if (asksOpen && !isTerm1 && !isTerm2 && !isSummer) {
+    return [
+      "ปฏิทินการศึกษา 2569 ระบุวันเปิดภาคเรียนหลักไว้แบบนี้ค่ะ",
+      "1. ภาค 1/2569 เปิดภาคเรียนปกติ 6 กรกฎาคม 2569 และภาคพิเศษ 4 กรกฎาคม 2569",
+      "2. ภาค 2/2569 เปิดภาคเรียนปกติ 23 พฤศจิกายน 2569 และภาคพิเศษ 21 พฤศจิกายน 2569",
+      "3. ภาคฤดูร้อน/2569 เปิดภาคเรียน 5 เมษายน 2570",
+      "หมายเหตุ: ถ้าเป็นเรื่องสำคัญให้เช็คประกาศล่าสุดจาก www.oreg.rmutt.ac.th อีกครั้งนะคะ",
+    ].join("\n");
+  }
+
+  if (isTerm1) {
+    if (asksOpen) return "ภาค 1/2569 เปิดภาคเรียนปกติวันที่ 6 กรกฎาคม 2569 ค่ะ ถ้าเป็นภาคพิเศษเปิดวันที่ 4 กรกฎาคม 2569";
+    if (asksClose) return "ภาค 1/2569 วันสุดท้ายของภาคการศึกษาคือ 8 พฤศจิกายน 2569 ค่ะ";
+    if (asksMidterm) return "ภาค 1/2569 สอบกลางภาควันที่ 29 สิงหาคม - 6 กันยายน 2569 ค่ะ";
+    if (asksFinal) return "ภาค 1/2569 สอบปลายภาควันที่ 26 ตุลาคม - 8 พฤศจิกายน 2569 ค่ะ";
+    if (asksGraduation) {
+      return [
+        "ภาค 1/2569 ขอสำเร็จการศึกษาและขึ้นทะเบียนบัณฑิตวันที่ 7 กรกฎาคม - 5 สิงหาคม 2569 ค่ะ",
+        "ถ้าขอช้าอยู่ในช่วง 6 สิงหาคม - 4 กันยายน 2569 มีค่าปรับ 500 บาท",
+        "ส่ง English Exit Exam ภายใน 16 พฤศจิกายน 2569 และวันสำเร็จการศึกษาคือ 16 พฤศจิกายน 2569",
+      ].join("\n");
+    }
+    if (asksRegistration) {
+      return [
+        "ภาค 1/2569 เพิ่ม-ถอนรายวิชาวันที่ 28 มิถุนายน - 4 กรกฎาคม 2569 ค่ะ",
+        "ชำระเงินค่าลงทะเบียนวันที่ 5-9 กรกฎาคม 2569",
+        "ช่วงลงทะเบียน/ชำระเงินล่าช้าคือ 10 กรกฎาคม - 18 สิงหาคม 2569 มีค่าปรับวันละ 50 บาท",
+      ].join("\n");
+    }
+  }
+
+  if (isTerm2) {
+    if (asksOpen) return "ภาค 2/2569 เปิดภาคเรียนปกติวันที่ 23 พฤศจิกายน 2569 ค่ะ ถ้าเป็นภาคพิเศษเปิดวันที่ 21 พฤศจิกายน 2569";
+    if (asksClose) return "ภาค 2/2569 วันสุดท้ายของภาคการศึกษาคือ 28 มีนาคม 2570 ค่ะ";
+    if (asksMidterm) return "ภาค 2/2569 สอบกลางภาควันที่ 16-24 มกราคม 2570 ค่ะ";
+    if (asksFinal) return "ภาค 2/2569 สอบปลายภาควันที่ 15-28 มีนาคม 2570 ค่ะ";
+    if (asksGraduation) {
+      return [
+        "ภาค 2/2569 ขอสำเร็จการศึกษาและขึ้นทะเบียนบัณฑิตวันที่ 24 พฤศจิกายน - 23 ธันวาคม 2569 ค่ะ",
+        "ถ้าขอช้าอยู่ในช่วง 24 ธันวาคม 2569 - 22 มกราคม 2570 มีค่าปรับ 500 บาท",
+        "ส่ง English Exit Exam ภายใน 5 เมษายน 2570 และวันสำเร็จการศึกษาคือ 5 เมษายน 2570",
+      ].join("\n");
+    }
+    if (asksRegistration) {
+      return [
+        "ภาค 2/2569 ลงทะเบียนนักศึกษาเดิม: ปี 1 วันที่ 16-17 พฤศจิกายน 2569, ปี 4-5 ขึ้นไปวันที่ 18-19 พฤศจิกายน 2569, ปี 2 วันที่ 20-21 พฤศจิกายน 2569, กลุ่มที่ยังไม่ได้ลงทะเบียนวันที่ 22-23 พฤศจิกายน 2569",
+        "เพิ่ม-ถอนรายวิชาวันที่ 24-28 พฤศจิกายน 2569 และชำระเงินวันที่ 29 พฤศจิกายน - 3 ธันวาคม 2569",
+        "ช่วงลงทะเบียน/ชำระเงินล่าช้าคือ 4 ธันวาคม 2569 - 12 มกราคม 2570 มีค่าปรับวันละ 50 บาท",
+      ].join("\n");
+    }
+  }
+
+  if (isSummer) {
+    if (asksOpen) return "ภาคฤดูร้อน/2569 เปิดภาคเรียนวันที่ 5 เมษายน 2570 ค่ะ";
+    if (asksClose) return "ภาคฤดูร้อน/2569 วันสุดท้ายของภาคการศึกษาคือ 13 มิถุนายน 2570 ค่ะ";
+    if (asksMidterm) return "ภาคฤดูร้อน/2569 สอบกลางภาควันที่ 3-9 พฤษภาคม 2570 ค่ะ";
+    if (asksFinal) return "ภาคฤดูร้อน/2569 สอบปลายภาควันที่ 7-13 มิถุนายน 2570 ค่ะ";
+    if (asksGraduation) {
+      return [
+        "ภาคฤดูร้อน/2569 ขอสำเร็จการศึกษาและขึ้นทะเบียนบัณฑิตวันที่ 6-20 เมษายน 2570 ค่ะ",
+        "ถ้าขอช้าอยู่ในช่วง 21 เมษายน - 5 พฤษภาคม 2570 มีค่าปรับ 500 บาท",
+        "ส่ง English Exit Exam ภายใน 21 มิถุนายน 2570 และวันสำเร็จการศึกษาคือ 21 มิถุนายน 2570",
+      ].join("\n");
+    }
+    if (asksRegistration) {
+      return [
+        "ภาคฤดูร้อน/2569 ลงทะเบียนวันที่ 29 มีนาคม - 4 เมษายน 2570 ค่ะ",
+        "ชำระเงินวันที่ 5-9 เมษายน 2570",
+        "ช่วงลงทะเบียน/ชำระเงินล่าช้าคือ 10 เมษายน - 19 พฤษภาคม 2570 มีค่าปรับวันละ 50 บาท",
+      ].join("\n");
+    }
+  }
+
+  if (asksGraduation) {
+    return [
+      "กำหนดขอสำเร็จการศึกษา ปีการศึกษา 2569 แยกตามภาคเป็นแบบนี้ค่ะ",
+      "1. ภาค 1/2569: 7 กรกฎาคม - 5 สิงหาคม 2569, ขอช้า 6 สิงหาคม - 4 กันยายน 2569",
+      "2. ภาค 2/2569: 24 พฤศจิกายน - 23 ธันวาคม 2569, ขอช้า 24 ธันวาคม 2569 - 22 มกราคม 2570",
+      "3. ภาคฤดูร้อน/2569: 6-20 เมษายน 2570, ขอช้า 21 เมษายน - 5 พฤษภาคม 2570",
+      "วันพระราชทานปริญญาบัตรยังไม่กำหนดในปฏิทินฉบับนี้ค่ะ",
+    ].join("\n");
+  }
+
+  if (asksFinal) {
+    return "สอบปลายภาคปีการศึกษา 2569 คือ ภาค 1 วันที่ 26 ตุลาคม - 8 พฤศจิกายน 2569, ภาค 2 วันที่ 15-28 มีนาคม 2570, และภาคฤดูร้อนวันที่ 7-13 มิถุนายน 2570 ค่ะ";
+  }
+
+  if (asksMidterm) {
+    return "สอบกลางภาคปีการศึกษา 2569 คือ ภาค 1 วันที่ 29 สิงหาคม - 6 กันยายน 2569, ภาค 2 วันที่ 16-24 มกราคม 2570, และภาคฤดูร้อนวันที่ 3-9 พฤษภาคม 2570 ค่ะ";
+  }
+
+  if (asksHoliday || compact.includes("สงกรานต์")) {
+    return [
+      "วันหยุดที่มักถามบ่อยในปฏิทินนี้คือ สงกรานต์ 13-15 เมษายน 2570 ค่ะ",
+      "ตัวอย่างวันหยุดอื่น ๆ: ปีใหม่ 1 มกราคม 2570, มาฆบูชา 21 กุมภาพันธ์ 2570, จักรี 6 เมษายน 2570, วิสาขบูชา 20 พฤษภาคม 2570, วันเฉลิมพระชนมพรรษาพระราชินี 3 มิถุนายน 2570",
+      "ถ้าน้องอยากดูวันหยุดทั้งหมด บอกพี่เทคว่า 'วันหยุดปี 2569/2570 มีอะไรบ้าง' ได้เลยค่ะ",
+    ].join("\n");
+  }
+
+  return null;
+}
+
 function answerAiReadyQuestion(question: string, chunks: KnowledgeChunk[]) {
   if (!isKnowledgeIntent(question)) return null;
   const chunk = chunks.find((item) => (item.knowledge_documents?.title || "").startsWith("AI READY"));
@@ -434,6 +571,19 @@ function answerAiReadyQuestion(question: string, chunks: KnowledgeChunk[]) {
     "\u0e2a\u0e21\u0e31\u0e04\u0e23",
     "\u0e2d\u0e32\u0e08\u0e32\u0e23\u0e22\u0e4c",
     "\u0e1b\u0e23\u0e30\u0e01\u0e31\u0e19",
+    "ปฏิทินการศึกษา",
+    "เปิดเทอม",
+    "เปิดภาคเรียน",
+    "ปิดเทอม",
+    "สอบกลางภาค",
+    "สอบปลายภาค",
+    "ขอจบ",
+    "ขอสำเร็จ",
+    "ขึ้นทะเบียนบัณฑิต",
+    "english exit",
+    "ลงทะเบียน",
+    "เพิ่มถอน",
+    "วันหยุด",
   ].filter((term) => compactQuestion.includes(term.replace(/\s+/g, "")));
   questionTerms.push(...intentTerms);
   const questionLineIndexes = lines
@@ -717,6 +867,35 @@ export async function POST(request: Request) {
         answer: feminineTone(orientationAnswer || ""),
         provider: "conversation-direct",
         sources: [],
+      });
+    }
+
+    if (intent.type === "academic_calendar") {
+      const calendarAnswer =
+        answerAcademicCalendarQuestion(lastUserMessage) ||
+        answerAiReadyQuestion(knowledgeQuery, chunks) ||
+        answerAiReadyQuestion(lastUserMessage, chunks);
+      if (calendarAnswer) {
+        return NextResponse.json({
+          answer: feminineTone(calendarAnswer),
+          provider: "knowledge-direct",
+          sources: chunks.map((chunk) => ({
+            id: chunk.document_id,
+            title: chunk.knowledge_documents?.title ?? "เอกสารไม่ระบุชื่อ",
+            type: chunk.knowledge_documents?.source_type ?? "text",
+          })),
+        });
+      }
+
+      const result = await askModel({ messages: cleanMessages, chunks });
+      return NextResponse.json({
+        answer: feminineTone(result.answer),
+        provider: result.provider,
+        sources: chunks.map((chunk) => ({
+          id: chunk.document_id,
+          title: chunk.knowledge_documents?.title ?? "เอกสารไม่ระบุชื่อ",
+          type: chunk.knowledge_documents?.source_type ?? "text",
+        })),
       });
     }
 
