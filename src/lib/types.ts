@@ -27,3 +27,5 @@ export type ChatMessage = {
   role: "user" | "assistant";
   content: string;
 };
+
+export type ResponseLanguage = "th" | "en" | "zh";

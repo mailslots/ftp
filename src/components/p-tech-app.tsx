@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { CheckSquare, ChevronLeft, ChevronRight, Edit3, FileText, ImageIcon, Loader2, LogIn, LogOut, Plus, Save, Send, Trash2, Upload, X } from "lucide-react";
 import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
-import type { ChatMessage, KnowledgeDocument } from "@/lib/types";
+import type { ChatMessage, KnowledgeDocument, ResponseLanguage } from "@/lib/types";
 
 type Source = { id: string; title: string; type: string };
 type DocumentCategory = KnowledgeDocument["category"];
@@ -50,6 +50,13 @@ const spamLockKey = "ptech-chat-spam-lock-until";
 const spamAttemptsKey = "ptech-chat-spam-attempts";
 const spamShortAttemptsKey = "ptech-chat-spam-short-attempts";
 const deviceIdKey = "ptech-chat-device-id";
+const languageKey = "ptech-chat-response-language";
+
+const responseLanguages: { value: ResponseLanguage; label: string; shortLabel: string; flag: string }[] = [
+  { value: "th", label: "ภาษาไทย", shortLabel: "TH", flag: "🇹🇭" },
+  { value: "en", label: "English", shortLabel: "EN", flag: "🇬🇧" },
+  { value: "zh", label: "中文", shortLabel: "ZH", flag: "🇨🇳" },
+];
 
 const nineQQuestions = [
   "ท่านรู้สึกเบื่อ ไม่สนใจอยากทำอะไร",
@@ -142,6 +149,12 @@ function getDeviceId() {
   return next;
 }
 
+function getStoredLanguage(): ResponseLanguage {
+  if (typeof window === "undefined") return "th";
+  const value = localStorage.getItem(languageKey);
+  return value === "en" || value === "zh" || value === "th" ? value : "th";
+}
+
 function parseStoredTimes(key: string) {
   if (typeof window === "undefined") return [];
   try {
@@ -204,6 +217,7 @@ export function PTechApp() {
   const [nineqAssessments, setNineqAssessments] = useState<NineQAssessment[]>([]);
   const [nineqMonthly, setNineqMonthly] = useState<NineQMonthlySummary[]>([]);
   const [deviceId] = useState(() => getDeviceId());
+  const [responseLanguage, setResponseLanguage] = useState<ResponseLanguage>(() => getStoredLanguage());
   const [spamLockedUntil, setSpamLockedUntil] = useState(() => (typeof window === "undefined" ? 0 : Number(localStorage.getItem(spamLockKey) || 0)));
   const [nowMs, setNowMs] = useState(() => Date.now());
   const bottomRef = useRef<HTMLDivElement | null>(null);
@@ -254,6 +268,11 @@ export function PTechApp() {
       .catch((error) => setAdminError(error.message));
   }, [adminEmail, refreshKey]);
 
+  function chooseResponseLanguage(language: ResponseLanguage) {
+    setResponseLanguage(language);
+    localStorage.setItem(languageKey, language);
+  }
+
   async function submitChat(event?: FormEvent, preset?: string) {
     event?.preventDefault();
     const question = (preset || input).trim();
@@ -281,7 +300,7 @@ export function PTechApp() {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "content-type": "application/json", "x-client-id": deviceId || getDeviceId() },
-        body: JSON.stringify({ messages: nextMessages, clientId: deviceId || getDeviceId() }),
+        body: JSON.stringify({ messages: nextMessages, clientId: deviceId || getDeviceId(), responseLanguage }),
       });
       const data = await response.json();
       if (response.status === 429 && data.lockedUntil) {
@@ -506,6 +525,27 @@ export function PTechApp() {
             <div>
               <h1 className="text-2xl font-semibold leading-tight tracking-normal">พี่เทค <span className="text-base font-medium text-[#42526a]">(Take Care)</span></h1>
             </div>
+          </div>
+          <div className="flex items-center gap-1 rounded-lg border border-white/80 bg-white/64 p-1 shadow-sm backdrop-blur-xl" aria-label="เลือกภาษาคำตอบ">
+            {responseLanguages.map((language) => {
+              const active = responseLanguage === language.value;
+              return (
+                <button
+                  key={language.value}
+                  type="button"
+                  onClick={() => chooseResponseLanguage(language.value)}
+                  className={`inline-flex h-9 items-center gap-1 rounded-md px-2.5 text-sm font-semibold transition ${
+                    active ? "bg-[#0d1b2e] text-white shadow-sm" : "text-[#42526a] hover:bg-white/80 hover:text-[#0d1b2e]"
+                  }`}
+                  aria-pressed={active}
+                  aria-label={language.label}
+                  title={language.label}
+                >
+                  <span className="text-base leading-none" aria-hidden="true">{language.flag}</span>
+                  <span className="hidden sm:inline">{language.shortLabel}</span>
+                </button>
+              );
+            })}
           </div>
         </header>
 

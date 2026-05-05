@@ -1,7 +1,7 @@
 ﻿import { NextResponse } from "next/server";
 import { askModel } from "@/lib/llm";
 import { getStudyPlanChunks, searchKnowledge } from "@/lib/knowledge";
-import type { ChatMessage, KnowledgeChunk } from "@/lib/types";
+import type { ChatMessage, KnowledgeChunk, ResponseLanguage } from "@/lib/types";
 
 export const runtime = "nodejs";
 
@@ -87,6 +87,52 @@ function feminineTone(answer: string) {
     .replace(/ไหมค่ะ/g, "ไหมคะ")
     .replace(/หรือยังค่ะ/g, "หรือยังคะ")
     .replace(/นะค่ะ/g, "นะคะ");
+}
+
+function normalizeResponseLanguage(value: unknown): ResponseLanguage {
+  return value === "en" || value === "zh" || value === "th" ? value : "th";
+}
+
+function ensureChineseTranslationNote(answer: string) {
+  if (/翻译|翻譯|泰语资料|泰語資料/.test(answer)) return answer;
+  return `${answer.trim()}\n（此内容由泰语资料翻译生成）`;
+}
+
+async function localizeAnswer(answer: string, language: ResponseLanguage) {
+  const thaiAnswer = feminineTone(answer || "");
+  if (language === "th" || !thaiAnswer.trim()) return thaiAnswer;
+
+  const instruction =
+    language === "en"
+      ? [
+          "Translate and rewrite the following Thai answer into natural English for an international student.",
+          "Keep official course codes and official English course names/descriptions if they appear in the source.",
+          "Do not mention internal systems or sources.",
+        ].join("\n")
+      : [
+          "Translate and rewrite the following Thai answer into Simplified Chinese for an international student.",
+          "Keep course codes and official English course names where helpful.",
+          "End with exactly this note: （此内容由泰语资料翻译生成）",
+          "Do not mention internal systems or sources.",
+        ].join("\n");
+
+  const result = await askModel({
+    language,
+    chunks: [],
+    messages: [
+      {
+        role: "user",
+        content: `${instruction}\n\n${thaiAnswer}`,
+      },
+    ],
+  });
+
+  const localized = result.answer?.trim() || thaiAnswer;
+  return language === "zh" ? ensureChineseTranslationNote(localized) : localized;
+}
+
+function presentAnswer(answer: string, language: ResponseLanguage) {
+  return language === "th" ? feminineTone(answer) : language === "zh" ? ensureChineseTranslationNote(answer) : answer;
 }
 
 function isCameraPurchaseQuestion(question: string) {
@@ -784,7 +830,12 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { messages, clientId } = (await request.json()) as { messages?: ChatMessage[]; clientId?: string };
+    const { messages, clientId, responseLanguage } = (await request.json()) as {
+      messages?: ChatMessage[];
+      clientId?: string;
+      responseLanguage?: unknown;
+    };
+    const language = normalizeResponseLanguage(responseLanguage);
     const cleanMessages = (messages ?? [])
       .filter((message) => message.role === "user" || message.role === "assistant")
       .map((message) => ({ role: message.role, content: String(message.content || "").slice(0, 4000) }));
@@ -828,7 +879,7 @@ export async function POST(request: Request) {
     if (intent.type === "ptech_meaning") {
       const ptechMeaningAnswer = answerPTechMeaning(lastUserMessage);
       return NextResponse.json({
-        answer: feminineTone(ptechMeaningAnswer || ""),
+        answer: await localizeAnswer(ptechMeaningAnswer || "", language),
         provider: "knowledge-direct",
         sources: [],
       });
@@ -838,13 +889,13 @@ export async function POST(request: Request) {
       const nineQAnswer = answerNineQResult(lastUserMessage);
       if (!nineQAnswer) {
         return NextResponse.json({
-          answer: "แบบประเมิน 9Q ควรทำผ่านหน้าต่างแบบประเมินก่อนนะคะ แล้วระบบจะส่งคะแนนรวมมาให้พี่เทคช่วยแนะนำต่อค่ะ",
+          answer: await localizeAnswer("แบบประเมิน 9Q ควรทำผ่านหน้าต่างแบบประเมินก่อนนะคะ แล้วระบบจะส่งคะแนนรวมมาให้พี่เทคช่วยแนะนำต่อค่ะ", language),
           provider: "conversation-direct",
           sources: [],
         });
       }
       return NextResponse.json({
-        answer: feminineTone(nineQAnswer),
+        answer: await localizeAnswer(nineQAnswer, language),
         provider: "knowledge-direct",
         sources: chunks.map((chunk) => ({
           id: chunk.document_id,
@@ -857,7 +908,7 @@ export async function POST(request: Request) {
     if (intent.type === "mental_health") {
       const mentalHealthAnswer = answerMentalHealthQuestion(lastUserMessage);
       return NextResponse.json({
-        answer: feminineTone(mentalHealthAnswer || ""),
+        answer: await localizeAnswer(mentalHealthAnswer || "", language),
         provider: "knowledge-direct",
         sources: chunks.map((chunk) => ({
           id: chunk.document_id,
@@ -871,7 +922,7 @@ export async function POST(request: Request) {
       const insuranceAnswer = answerInsuranceQuestion(lastUserMessage) || answerAiReadyQuestion(lastUserMessage, chunks);
       if (insuranceAnswer) {
         return NextResponse.json({
-          answer: feminineTone(insuranceAnswer),
+          answer: await localizeAnswer(insuranceAnswer, language),
           provider: "knowledge-direct",
           sources: chunks.map((chunk) => ({
             id: chunk.document_id,
@@ -893,9 +944,9 @@ export async function POST(request: Request) {
       }
       const directRetireAnswer = retireCheckAnswer || answerAiReadyQuestion("รีไทร์ พ้นสภาพ เกรดเฉลี่ย GPA หน่วยกิต", chunks);
       if (!directRetireAnswer) {
-        const result = await askModel({ messages: cleanMessages, chunks });
+        const result = await askModel({ messages: cleanMessages, chunks, language });
         return NextResponse.json({
-          answer: feminineTone(result.answer),
+          answer: presentAnswer(result.answer, language),
           provider: result.provider,
           sources: chunks.map((chunk) => ({
             id: chunk.document_id,
@@ -905,7 +956,7 @@ export async function POST(request: Request) {
         });
       }
       return NextResponse.json({
-        answer: feminineTone(directRetireAnswer),
+        answer: await localizeAnswer(directRetireAnswer, language),
         provider: "knowledge-direct",
         sources: chunks.map((chunk) => ({
           id: chunk.document_id,
@@ -918,7 +969,7 @@ export async function POST(request: Request) {
     if (intent.type === "orientation") {
       const orientationAnswer = answerOrientationQuestion(lastUserMessage);
       return NextResponse.json({
-        answer: feminineTone(orientationAnswer || ""),
+        answer: await localizeAnswer(orientationAnswer || "", language),
         provider: "conversation-direct",
         sources: [],
       });
@@ -930,7 +981,7 @@ export async function POST(request: Request) {
       const policyAnswer = answerAdministrationPolicyQuestion(lastUserMessage) || answerAiReadyQuestion(lastUserMessage, scopedChunks) || answerAiReadyQuestion(knowledgeQuery, scopedChunks);
       if (policyAnswer) {
         return NextResponse.json({
-          answer: feminineTone(policyAnswer),
+          answer: await localizeAnswer(policyAnswer, language),
           provider: "knowledge-direct",
           sources: scopedChunks.map((chunk) => ({
             id: chunk.document_id,
@@ -940,9 +991,9 @@ export async function POST(request: Request) {
         });
       }
 
-      const result = await askModel({ messages: cleanMessages, chunks: scopedChunks });
+      const result = await askModel({ messages: cleanMessages, chunks: scopedChunks, language });
       return NextResponse.json({
-        answer: feminineTone(result.answer),
+        answer: presentAnswer(result.answer, language),
         provider: result.provider,
         sources: scopedChunks.map((chunk) => ({
           id: chunk.document_id,
@@ -959,7 +1010,7 @@ export async function POST(request: Request) {
         answerAiReadyQuestion(lastUserMessage, chunks);
       if (calendarAnswer) {
         return NextResponse.json({
-          answer: feminineTone(calendarAnswer),
+          answer: await localizeAnswer(calendarAnswer, language),
           provider: "knowledge-direct",
           sources: chunks.map((chunk) => ({
             id: chunk.document_id,
@@ -969,9 +1020,9 @@ export async function POST(request: Request) {
         });
       }
 
-      const result = await askModel({ messages: cleanMessages, chunks });
+      const result = await askModel({ messages: cleanMessages, chunks, language });
       return NextResponse.json({
-        answer: feminineTone(result.answer),
+        answer: presentAnswer(result.answer, language),
         provider: result.provider,
         sources: chunks.map((chunk) => ({
           id: chunk.document_id,
@@ -985,7 +1036,7 @@ export async function POST(request: Request) {
       const studyPlanQuestion = `ปี ${intent.year}${intent.term ? ` เทอม ${intent.term}` : ""} เรียนอะไร`;
       const studyPlanAnswer = answerStudyPlanQuestion(studyPlanQuestion, chunks);
       return NextResponse.json({
-        answer: feminineTone(studyPlanAnswer || "ยังไม่เจอแผนการเรียนปี/เทอมนี้ในฐานข้อมูลค่ะ ลองระบุปีและเทอมอีกครั้ง เช่น ปี 1 เทอม 1"),
+        answer: await localizeAnswer(studyPlanAnswer || "ยังไม่เจอแผนการเรียนปี/เทอมนี้ในฐานข้อมูลค่ะ ลองระบุปีและเทอมอีกครั้ง เช่น ปี 1 เทอม 1", language),
         provider: "knowledge-direct",
         sources: chunks.map((chunk) => ({
           id: chunk.document_id,
@@ -997,7 +1048,7 @@ export async function POST(request: Request) {
 
     if (intent.type === "camera_purchase") {
       return NextResponse.json({
-        answer: feminineTone(answerCameraPurchaseQuestion(lastUserMessage)),
+        answer: await localizeAnswer(answerCameraPurchaseQuestion(lastUserMessage), language),
         provider: "conversation-direct",
         sources: [],
       });
@@ -1006,7 +1057,7 @@ export async function POST(request: Request) {
     if (intent.type === "course_catalog") {
       const courseCatalogAnswer = answerCourseCatalogQuestion(knowledgeQuery, chunks);
       return NextResponse.json({
-        answer: feminineTone(courseCatalogAnswer || "ยังไม่เจอคำอธิบายรายวิชานี้ในฐานข้อมูลค่ะ ลองพิมพ์ชื่อวิชาเต็มหรือรหัสวิชาอีกครั้งนะคะ"),
+        answer: await localizeAnswer(courseCatalogAnswer || "ยังไม่เจอคำอธิบายรายวิชานี้ในฐานข้อมูลค่ะ ลองพิมพ์ชื่อวิชาเต็มหรือรหัสวิชาอีกครั้งนะคะ", language),
         provider: "knowledge-direct",
         sources: chunks.map((chunk) => ({
           id: chunk.document_id,
@@ -1019,7 +1070,7 @@ export async function POST(request: Request) {
     const aiReadyAnswer = answerAiReadyQuestion(knowledgeQuery, chunks);
     if (aiReadyAnswer) {
       return NextResponse.json({
-        answer: feminineTone(aiReadyAnswer),
+        answer: await localizeAnswer(aiReadyAnswer, language),
         provider: "knowledge-direct",
         sources: chunks.map((chunk) => ({
           id: chunk.document_id,
@@ -1030,9 +1081,9 @@ export async function POST(request: Request) {
     }
 
     const modelChunks = isKnowledgeIntent(knowledgeQuery) ? chunks : [];
-    const result = await askModel({ messages: cleanMessages, chunks: modelChunks });
+    const result = await askModel({ messages: cleanMessages, chunks: modelChunks, language });
     return NextResponse.json({
-      answer: feminineTone(result.answer),
+      answer: presentAnswer(result.answer, language),
       provider: result.provider,
       sources: modelChunks.map((chunk) => ({
         id: chunk.document_id,
