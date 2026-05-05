@@ -29,3 +29,7 @@ export type ChatMessage = {
 };
 
 export type ResponseLanguage = "th" | "en" | "zh";
+
+export type AppSettings = {
+  deepseekCooldownEnabled: boolean;
+};

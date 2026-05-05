@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { CheckSquare, ChevronLeft, ChevronRight, Edit3, FileText, ImageIcon, Loader2, LogIn, LogOut, Plus, Save, Send, Trash2, Upload, X } from "lucide-react";
 import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
-import type { ChatMessage, KnowledgeDocument, ResponseLanguage } from "@/lib/types";
+import type { AppSettings, ChatMessage, KnowledgeDocument, ResponseLanguage } from "@/lib/types";
 
 type Source = { id: string; title: string; type: string };
 type DocumentCategory = KnowledgeDocument["category"];
@@ -23,6 +23,7 @@ type NineQAssessment = {
   created_at: string;
 };
 type NineQMonthlySummary = { month: string; total: number; mild: number; moderate: number; severe: number; q9Risk: number };
+type ProviderMode = "gemini" | "deepseek";
 
 const documentCategories: { value: DocumentCategory; label: string }[] = [
   { value: "branch", label: "ฐานข้อมูลสาขา" },
@@ -216,6 +217,9 @@ export function PTechApp() {
   const [savingNineQContact, setSavingNineQContact] = useState(false);
   const [nineqAssessments, setNineqAssessments] = useState<NineQAssessment[]>([]);
   const [nineqMonthly, setNineqMonthly] = useState<NineQMonthlySummary[]>([]);
+  const [appSettings, setAppSettings] = useState<AppSettings>({ deepseekCooldownEnabled: false });
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [providerMode, setProviderMode] = useState<ProviderMode>("gemini");
   const [deviceId] = useState(() => getDeviceId());
   const [responseLanguage, setResponseLanguage] = useState<ResponseLanguage>(() => getStoredLanguage());
   const [spamLockedUntil, setSpamLockedUntil] = useState(() => (typeof window === "undefined" ? 0 : Number(localStorage.getItem(spamLockKey) || 0)));
@@ -257,13 +261,16 @@ export function PTechApp() {
     Promise.all([
       fetch("/api/admin/documents").then((response) => response.json()),
       fetch("/api/admin/nineq").then((response) => response.json()),
+      fetch("/api/admin/settings").then((response) => response.json()),
     ])
-      .then(([documentData, nineqData]) => {
+      .then(([documentData, nineqData, settingsData]) => {
         if (documentData.documents) setDocuments(documentData.documents);
         if (documentData.error) setAdminError(documentData.error);
         if (nineqData.assessments) setNineqAssessments(nineqData.assessments);
         if (nineqData.monthly) setNineqMonthly(nineqData.monthly);
         if (nineqData.error) setAdminError(nineqData.error);
+        if (settingsData.settings) setAppSettings(settingsData.settings);
+        if (settingsData.error) setAdminError(settingsData.error);
       })
       .catch((error) => setAdminError(error.message));
   }, [adminEmail, refreshKey]);
@@ -271,6 +278,25 @@ export function PTechApp() {
   function chooseResponseLanguage(language: ResponseLanguage) {
     setResponseLanguage(language);
     localStorage.setItem(languageKey, language);
+  }
+
+  async function updateCooldownSetting(enabled: boolean) {
+    setSavingSettings(true);
+    setAdminError("");
+    try {
+      const response = await fetch("/api/admin/settings", {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ deepseekCooldownEnabled: enabled }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Save settings failed");
+      setAppSettings(data.settings);
+    } catch (error) {
+      setAdminError(error instanceof Error ? error.message : "Save settings failed");
+    } finally {
+      setSavingSettings(false);
+    }
   }
 
   async function submitChat(event?: FormEvent, preset?: string) {
@@ -307,16 +333,25 @@ export function PTechApp() {
         const lockedUntil = Number(data.lockedUntil);
         localStorage.setItem(spamLockKey, String(lockedUntil));
         setSpamLockedUntil(lockedUntil);
+        if (data.providerStatus === "deepseek") setProviderMode("deepseek");
         setMessages((current) => [
           ...current,
           {
             role: "assistant",
-            content: `ระบบล็อกการส่งข้อความชั่วคราว เพราะตรวจพบการส่งถี่เกินไป กรุณารอ ${formatLockRemaining(lockedUntil, nowMs)} แล้วค่อยส่งใหม่นะคะ`,
+            content:
+              data.reason === "deepseek-cooldown"
+                ? `พี่เทคกำลังคุยกับน้องอีกคนอยู่ ขอให้รอคิวแปปนึงนะคะ อีกประมาณ ${formatLockRemaining(lockedUntil, nowMs)} ค่อยส่งใหม่นะ`
+                : `ระบบล็อกการส่งข้อความชั่วคราว เพราะตรวจพบการส่งถี่เกินไป กรุณารอ ${formatLockRemaining(lockedUntil, nowMs)} แล้วค่อยส่งใหม่นะคะ`,
           },
         ]);
         return;
       }
       if (!response.ok) throw new Error(data.error || "Chat failed");
+      if (data.providerStatus === "gemini" || data.providerStatus === "deepseek") setProviderMode(data.providerStatus);
+      if (data.cooldownLockedUntil) {
+        localStorage.setItem(spamLockKey, String(data.cooldownLockedUntil));
+        setSpamLockedUntil(Number(data.cooldownLockedUntil));
+      }
       setSources(data.sources ?? []);
       setMessages((current) => [...current, { role: "assistant", content: data.answer }]);
     } catch {
@@ -573,8 +608,13 @@ export function PTechApp() {
                 </div>
               ))}
               {loadingChat && (
-                <div className="flex items-center gap-2 text-sm text-[#42526a]">
-                  <Loader2 className="animate-spin" size={16} /> พี่เทคกำลังคิดคำตอบ
+                <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium ${
+                  providerMode === "deepseek"
+                    ? "border-sky-200 bg-sky-50 text-sky-700"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                }`}>
+                  <Loader2 className="animate-spin" size={16} />
+                  {providerMode === "deepseek" ? "Gemini เต็มแล้ว DeepSeek กำลังเข้ามาช่วยพี่เทคคิดคำตอบ" : "พี่เทคกำลังคิดคำตอบ"}
                 </div>
               )}
               <div ref={bottomRef} />
@@ -608,6 +648,27 @@ export function PTechApp() {
 
         {adminEmail && (
           <section className="space-y-4 pb-4">
+            <section className="rounded-lg border border-[#0d1b2e]/10 bg-white p-5">
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-lg font-semibold">ตั้งค่าคิว DeepSeek</h2>
+                  <p className="text-sm leading-6 text-[#42526a]">
+                    ถ้าเปิดไว้ เมื่อ Gemini เต็มและระบบต้องใช้ DeepSeek หลายครั้งติดกันจากเครื่องเดิม ระบบจะให้รอคิว 1 นาทีหลังครบ 3 ครั้ง
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  disabled={savingSettings}
+                  onClick={() => updateCooldownSetting(!appSettings.deepseekCooldownEnabled)}
+                  className={`inline-flex min-w-[128px] items-center justify-center rounded-md px-4 py-2.5 text-sm font-semibold transition disabled:opacity-50 ${
+                    appSettings.deepseekCooldownEnabled ? "bg-[#0d1b2e] text-white" : "border border-[#0d1b2e]/15 bg-white text-[#0d1b2e] hover:bg-[#eef3f8]"
+                  }`}
+                >
+                  {savingSettings ? <Loader2 className="mr-2 animate-spin" size={16} /> : null}
+                  {appSettings.deepseekCooldownEnabled ? "Cooldown เปิดอยู่" : "Cooldown ปิดอยู่"}
+                </button>
+              </div>
+            </section>
             <section className="rounded-lg border border-[#0d1b2e]/10 bg-white p-5">
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div>

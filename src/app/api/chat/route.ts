@@ -1,5 +1,6 @@
 ﻿import { NextResponse } from "next/server";
 import { askModel } from "@/lib/llm";
+import { getAppSettings } from "@/lib/app-settings";
 import { getStudyPlanChunks, searchKnowledge } from "@/lib/knowledge";
 import type { ChatMessage, KnowledgeChunk, ResponseLanguage } from "@/lib/types";
 
@@ -9,6 +10,11 @@ type SpamState = {
   attempts: number[];
   shortAttempts: number[];
   violations: number;
+  lockedUntil: number;
+};
+
+type DeepSeekCooldownState = {
+  count: number;
   lockedUntil: number;
 };
 
@@ -28,6 +34,9 @@ type ChatIntent =
   | { type: "general"; query: string };
 
 const spamStates = new Map<string, SpamState>();
+const deepseekCooldownStates = new Map<string, DeepSeekCooldownState>();
+const DEEPSEEK_COOLDOWN_LIMIT = 3;
+const DEEPSEEK_COOLDOWN_MS = 60_000;
 
 function getClientKey(request: Request, clientId: string) {
   const forwardedFor = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
@@ -78,6 +87,64 @@ function checkSpam(request: Request, clientId: string, message: string) {
 
   spamStates.set(key, state);
   return { blocked: false, lockedUntil: 0, reason: "" };
+}
+
+function checkDeepSeekCooldown(request: Request, clientId: string, enabled: boolean) {
+  if (!enabled) return { blocked: false, lockedUntil: 0 };
+  const now = Date.now();
+  const key = getClientKey(request, clientId);
+  const state = deepseekCooldownStates.get(key);
+  if (state?.lockedUntil && state.lockedUntil > now) {
+    return { blocked: true, lockedUntil: state.lockedUntil };
+  }
+  if (state?.lockedUntil && state.lockedUntil <= now) {
+    deepseekCooldownStates.delete(key);
+  }
+  return { blocked: false, lockedUntil: 0 };
+}
+
+function isDeepSeekProvider(provider: string) {
+  return /deepseek/i.test(provider);
+}
+
+function providerStatus(provider: string) {
+  return isDeepSeekProvider(provider) ? "deepseek" : "gemini";
+}
+
+function recordDeepSeekUse(request: Request, clientId: string, enabled: boolean, provider: string) {
+  if (!enabled) return null;
+  const key = getClientKey(request, clientId);
+  const state = deepseekCooldownStates.get(key) ?? { count: 0, lockedUntil: 0 };
+  if (!isDeepSeekProvider(provider)) {
+    if (state.count > 0 || state.lockedUntil > 0) deepseekCooldownStates.set(key, { count: 0, lockedUntil: 0 });
+    return null;
+  }
+
+  state.count += 1;
+  if (state.count >= DEEPSEEK_COOLDOWN_LIMIT) {
+    state.count = 0;
+    state.lockedUntil = Date.now() + DEEPSEEK_COOLDOWN_MS;
+  }
+  deepseekCooldownStates.set(key, state);
+  return state.lockedUntil > Date.now() ? state.lockedUntil : null;
+}
+
+function chatResponse(
+  request: Request,
+  clientId: string,
+  cooldownEnabled: boolean,
+  body: {
+    answer: string;
+    provider: string;
+    sources: Array<{ id: string; title: string; type: string }>;
+  },
+) {
+  const cooldownLockedUntil = recordDeepSeekUse(request, clientId, cooldownEnabled, body.provider);
+  return NextResponse.json({
+    ...body,
+    providerStatus: providerStatus(body.provider),
+    cooldownLockedUntil,
+  });
 }
 
 function feminineTone(answer: string) {
@@ -836,6 +903,7 @@ export async function POST(request: Request) {
       responseLanguage?: unknown;
     };
     const language = normalizeResponseLanguage(responseLanguage);
+    const clientKey = String(clientId || "");
     const cleanMessages = (messages ?? [])
       .filter((message) => message.role === "user" || message.role === "assistant")
       .map((message) => ({ role: message.role, content: String(message.content || "").slice(0, 4000) }));
@@ -845,7 +913,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "กรุณาพิมพ์คำถาม" }, { status: 400 });
     }
 
-    const spamCheck = checkSpam(request, String(clientId || ""), lastUserMessage);
+    let cooldownEnabled = false;
+    try {
+      cooldownEnabled = (await getAppSettings()).deepseekCooldownEnabled;
+    } catch {}
+
+    const deepseekCooldownCheck = checkDeepSeekCooldown(request, clientKey, cooldownEnabled);
+    if (deepseekCooldownCheck.blocked) {
+      return NextResponse.json(
+        {
+          error: "พี่เทคกำลังคุยกับน้องอีกคนอยู่ ขอให้รอคิวแปปนึงนะคะ",
+          reason: "deepseek-cooldown",
+          lockedUntil: deepseekCooldownCheck.lockedUntil,
+          providerStatus: "deepseek",
+        },
+        { status: 429 },
+      );
+    }
+
+    const spamCheck = checkSpam(request, clientKey, lastUserMessage);
     if (spamCheck.blocked) {
       return NextResponse.json(
         {
@@ -945,7 +1031,7 @@ export async function POST(request: Request) {
       const directRetireAnswer = retireCheckAnswer || answerAiReadyQuestion("รีไทร์ พ้นสภาพ เกรดเฉลี่ย GPA หน่วยกิต", chunks);
       if (!directRetireAnswer) {
         const result = await askModel({ messages: cleanMessages, chunks, language });
-        return NextResponse.json({
+        return chatResponse(request, clientKey, cooldownEnabled, {
           answer: presentAnswer(result.answer, language),
           provider: result.provider,
           sources: chunks.map((chunk) => ({
@@ -992,7 +1078,7 @@ export async function POST(request: Request) {
       }
 
       const result = await askModel({ messages: cleanMessages, chunks: scopedChunks, language });
-      return NextResponse.json({
+      return chatResponse(request, clientKey, cooldownEnabled, {
         answer: presentAnswer(result.answer, language),
         provider: result.provider,
         sources: scopedChunks.map((chunk) => ({
@@ -1021,7 +1107,7 @@ export async function POST(request: Request) {
       }
 
       const result = await askModel({ messages: cleanMessages, chunks, language });
-      return NextResponse.json({
+      return chatResponse(request, clientKey, cooldownEnabled, {
         answer: presentAnswer(result.answer, language),
         provider: result.provider,
         sources: chunks.map((chunk) => ({
@@ -1082,7 +1168,7 @@ export async function POST(request: Request) {
 
     const modelChunks = isKnowledgeIntent(knowledgeQuery) ? chunks : [];
     const result = await askModel({ messages: cleanMessages, chunks: modelChunks, language });
-    return NextResponse.json({
+    return chatResponse(request, clientKey, cooldownEnabled, {
       answer: presentAnswer(result.answer, language),
       provider: result.provider,
       sources: modelChunks.map((chunk) => ({
