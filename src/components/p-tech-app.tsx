@@ -29,6 +29,7 @@ const documentCategories: { value: DocumentCategory; label: string }[] = [
   { value: "academic", label: "ฝ่ายวิชาการ" },
   { value: "student_development", label: "ฝ่ายพัฒนานักศึกษา" },
   { value: "academic_staff", label: "ฝ่ายนักวิชาการ" },
+  { value: "administration", label: "ฝ่ายบริหาร" },
   { value: "other", label: "อื่นๆ" },
 ];
 
@@ -37,6 +38,7 @@ const documentsPerPage = 10;
 const faqItems: FaqItem[] = [
   { label: "ปี 1 เทอม 1 เรียนอะไร?", action: "chat" },
   { label: "ขอเงินรางวัล/คืนเงินค่าสอบภาษา", action: "chat", prompt: "การขอรับเงินรางวัลและการคืนเงินค่าสอบวัดระดับภาษา ทำอย่างไร?" },
+  { label: "นโยบาย/วิสัยทัศน์ของคณะ", action: "chat", prompt: "นโยบาย วิสัยทัศน์ ยุทธศาสตร์ วัฒนธรรมองค์กร และค่านิยม MCT ของคณะคืออะไร?" },
   { label: "ประกันอุบัติเหตุคุ้มครองอะไรบ้าง?", action: "chat" },
   { label: "คลินิกกำลังใจติดต่อได้ที่ไหน?", action: "chat" },
   { label: "แบบประเมินโรคซึมเศร้า 9Q", action: "assessment" },

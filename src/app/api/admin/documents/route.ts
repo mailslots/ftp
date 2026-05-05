@@ -5,7 +5,7 @@ import type { KnowledgeDocument } from "@/lib/types";
 
 export const runtime = "nodejs";
 
-const categories: KnowledgeDocument["category"][] = ["branch", "academic", "student_development", "academic_staff", "other"];
+const categories: KnowledgeDocument["category"][] = ["branch", "academic", "student_development", "academic_staff", "administration", "other"];
 
 function normalizeCategory(value: FormDataEntryValue | null): KnowledgeDocument["category"] {
   const category = String(value || "branch") as KnowledgeDocument["category"];

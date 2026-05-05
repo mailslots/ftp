@@ -7,7 +7,7 @@ export type KnowledgeDocument = {
   file_size: number | null;
   extracted_text: string | null;
   notes: string | null;
-  category: "branch" | "academic" | "student_development" | "academic_staff" | "other";
+  category: "branch" | "academic" | "student_development" | "academic_staff" | "administration" | "other";
   expires_at: string | null;
   deleted_at: string | null;
   created_at: string;

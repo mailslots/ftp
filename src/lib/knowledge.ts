@@ -337,6 +337,16 @@ export async function searchKnowledge(query: string) {
     "jlpt",
     "hsk",
     "hskk",
+    "นโยบาย",
+    "วิสัยทัศน์",
+    "ยุทธศาสตร์",
+    "วัฒนธรรมองค์กร",
+    "ค่านิยม",
+    "mct",
+    "moral",
+    "creativity",
+    "innovative management",
+    "learning to be innovator",
   ];
   for (const keyword of faqKeywords) {
     if (normalizedQuery.includes(keyword)) terms.push(keyword);
