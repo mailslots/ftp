@@ -57,7 +57,7 @@ export function getAiModelSequence(settings: AiRoutingSettings = {}): AiModelEnt
   const gemini = sequenceItems("gemini", GEMINI_MODELS);
   const groq = sequenceItems("groq", GROQ_MODELS);
   const deepseek = sequenceItems("deepseek", DEEPSEEK_MODELS);
-  const base = settings.groqEnabled ? [...groq, ...gemini, ...deepseek] : [...gemini, ...deepseek];
+  const base = settings.groqEnabled ? [...groq, ...gemini, ...deepseek] : [...gemini, ...groq, ...deepseek];
   return base.map((item, index) => ({ ...item, order: index + 1 }));
 }
 

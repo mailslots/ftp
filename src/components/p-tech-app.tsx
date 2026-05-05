@@ -704,7 +704,7 @@ export function PTechApp() {
                 <div>
                   <h2 className="text-lg font-semibold">ตั้งค่าคิวและโมเดลสำรอง</h2>
                   <p className="text-sm leading-6 text-[#42526a]">
-                    ถ้าเปิด Groq ระบบจะลอง Groq ก่อน DeepSeek หลัง Gemini เต็ม ส่วน Cooldown จะนับเฉพาะตอนที่ระบบไปถึง DeepSeek
+                    ถ้าปิด Groq ระบบจะลอง Gemini แล้วต่อด้วย Groq ก่อน DeepSeek ถ้าเปิด Groq ระบบจะลอง Groq ก่อน Gemini ส่วน Cooldown จะนับเฉพาะตอนที่ระบบไปถึง DeepSeek
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -1004,7 +1004,7 @@ export function PTechApp() {
               <div className="flex items-center justify-between gap-3 border-b border-[#0d1b2e]/10 px-5 py-4">
                 <div>
                   <h2 className="font-semibold">ลำดับ AI และจำนวนครั้งที่ถูกใช้</h2>
-                  <p className="text-sm text-[#42526a]">ค่าเริ่มต้นเป็น By day ถ้าเปิด Groq ระบบจะเรียง Groq ก่อน แล้วค่อย Gemini และ DeepSeek</p>
+                  <p className="text-sm text-[#42526a]">ค่าเริ่มต้นเป็น By day ปิด Groq = Gemini, Groq, DeepSeek และเปิด Groq = Groq, Gemini, DeepSeek</p>
                 </div>
                 <button onClick={() => setShowAiUsage(false)} className="rounded-md border border-[#0d1b2e]/10 p-2 text-[#42526a] hover:bg-[#eef3f8]" aria-label="ปิด">
                   <X size={16} />
