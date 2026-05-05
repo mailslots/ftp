@@ -23,7 +23,7 @@ type NineQAssessment = {
   created_at: string;
 };
 type NineQMonthlySummary = { month: string; total: number; mild: number; moderate: number; severe: number; q9Risk: number };
-type ProviderMode = "gemini" | "deepseek";
+type ProviderMode = "gemini" | "groq" | "deepseek";
 
 const documentCategories: { value: DocumentCategory; label: string }[] = [
   { value: "branch", label: "ฐานข้อมูลสาขา" },
@@ -141,6 +141,27 @@ function formatLockRemaining(lockedUntil: number, now: number) {
   return `${Math.ceil(seconds / 60)} นาที`;
 }
 
+function thinkingClass(providerMode: ProviderMode, providerRank: number | null) {
+  if (providerMode === "deepseek") return "border-purple-200 bg-purple-50 text-purple-700";
+  if (providerMode !== "groq") return "border-emerald-200 bg-emerald-50 text-emerald-700";
+  const rank = Math.max(1, Math.min(12, providerRank || 1));
+  const scale = [
+    "border-red-100 bg-red-50 text-red-500",
+    "border-red-100 bg-red-50 text-red-600",
+    "border-red-200 bg-red-50 text-red-600",
+    "border-red-200 bg-red-100 text-red-700",
+    "border-red-300 bg-red-100 text-red-700",
+    "border-red-300 bg-red-100 text-red-800",
+    "border-red-400 bg-red-100 text-red-800",
+    "border-red-400 bg-red-200 text-red-800",
+    "border-red-500 bg-red-200 text-red-900",
+    "border-red-500 bg-red-200 text-red-900",
+    "border-red-600 bg-red-200 text-red-950",
+    "border-red-700 bg-red-300 text-red-950",
+  ];
+  return scale[rank - 1];
+}
+
 function getDeviceId() {
   if (typeof window === "undefined") return "";
   const existing = localStorage.getItem(deviceIdKey);
@@ -217,9 +238,10 @@ export function PTechApp() {
   const [savingNineQContact, setSavingNineQContact] = useState(false);
   const [nineqAssessments, setNineqAssessments] = useState<NineQAssessment[]>([]);
   const [nineqMonthly, setNineqMonthly] = useState<NineQMonthlySummary[]>([]);
-  const [appSettings, setAppSettings] = useState<AppSettings>({ deepseekCooldownEnabled: false });
+  const [appSettings, setAppSettings] = useState<AppSettings>({ deepseekCooldownEnabled: false, deepseekCooldownLimit: 1, groqEnabled: false });
   const [savingSettings, setSavingSettings] = useState(false);
   const [providerMode, setProviderMode] = useState<ProviderMode>("gemini");
+  const [providerRank, setProviderRank] = useState<number | null>(null);
   const [deviceId] = useState(() => getDeviceId());
   const [responseLanguage, setResponseLanguage] = useState<ResponseLanguage>(() => getStoredLanguage());
   const [spamLockedUntil, setSpamLockedUntil] = useState(() => (typeof window === "undefined" ? 0 : Number(localStorage.getItem(spamLockKey) || 0)));
@@ -280,14 +302,14 @@ export function PTechApp() {
     localStorage.setItem(languageKey, language);
   }
 
-  async function updateCooldownSetting(enabled: boolean) {
+  async function updateAppSettings(nextSettings: AppSettings) {
     setSavingSettings(true);
     setAdminError("");
     try {
       const response = await fetch("/api/admin/settings", {
         method: "PUT",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ deepseekCooldownEnabled: enabled }),
+        body: JSON.stringify(nextSettings),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Save settings failed");
@@ -333,7 +355,8 @@ export function PTechApp() {
         const lockedUntil = Number(data.lockedUntil);
         localStorage.setItem(spamLockKey, String(lockedUntil));
         setSpamLockedUntil(lockedUntil);
-        if (data.providerStatus === "deepseek") setProviderMode("deepseek");
+        if (data.providerStatus === "deepseek" || data.providerStatus === "groq") setProviderMode(data.providerStatus);
+        if (typeof data.providerRank === "number") setProviderRank(data.providerRank);
         setMessages((current) => [
           ...current,
           {
@@ -347,7 +370,8 @@ export function PTechApp() {
         return;
       }
       if (!response.ok) throw new Error(data.error || "Chat failed");
-      if (data.providerStatus === "gemini" || data.providerStatus === "deepseek") setProviderMode(data.providerStatus);
+      if (data.providerStatus === "gemini" || data.providerStatus === "groq" || data.providerStatus === "deepseek") setProviderMode(data.providerStatus);
+      setProviderRank(typeof data.providerRank === "number" ? data.providerRank : null);
       if (data.cooldownLockedUntil) {
         localStorage.setItem(spamLockKey, String(data.cooldownLockedUntil));
         setSpamLockedUntil(Number(data.cooldownLockedUntil));
@@ -608,13 +632,9 @@ export function PTechApp() {
                 </div>
               ))}
               {loadingChat && (
-                <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium ${
-                  providerMode === "deepseek"
-                    ? "border-sky-200 bg-sky-50 text-sky-700"
-                    : "border-emerald-200 bg-emerald-50 text-emerald-700"
-                }`}>
+                <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium ${thinkingClass(providerMode, providerRank)}`}>
                   <Loader2 className="animate-spin" size={16} />
-                  {providerMode === "deepseek" ? "Gemini เต็มแล้ว DeepSeek กำลังเข้ามาช่วยพี่เทคคิดคำตอบ" : "พี่เทคกำลังคิดคำตอบ"}
+                  พี่เทคกำลังคิดคำตอบ
                 </div>
               )}
               <div ref={bottomRef} />
@@ -651,22 +671,47 @@ export function PTechApp() {
             <section className="rounded-lg border border-[#0d1b2e]/10 bg-white p-5">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-lg font-semibold">ตั้งค่าคิว DeepSeek</h2>
+                  <h2 className="text-lg font-semibold">ตั้งค่าคิวและโมเดลสำรอง</h2>
                   <p className="text-sm leading-6 text-[#42526a]">
-                    ถ้าเปิดไว้ เมื่อ Gemini เต็มและระบบต้องใช้ DeepSeek หลายครั้งติดกันจากเครื่องเดิม ระบบจะให้รอคิว 1 นาทีหลังครบ 3 ครั้ง
+                    ถ้าเปิด Groq ระบบจะลอง Groq ก่อน DeepSeek หลัง Gemini เต็ม ส่วน Cooldown จะนับเฉพาะตอนที่ระบบไปถึง DeepSeek
                   </p>
                 </div>
-                <button
-                  type="button"
-                  disabled={savingSettings}
-                  onClick={() => updateCooldownSetting(!appSettings.deepseekCooldownEnabled)}
-                  className={`inline-flex min-w-[128px] items-center justify-center rounded-md px-4 py-2.5 text-sm font-semibold transition disabled:opacity-50 ${
-                    appSettings.deepseekCooldownEnabled ? "bg-[#0d1b2e] text-white" : "border border-[#0d1b2e]/15 bg-white text-[#0d1b2e] hover:bg-[#eef3f8]"
-                  }`}
-                >
-                  {savingSettings ? <Loader2 className="mr-2 animate-spin" size={16} /> : null}
-                  {appSettings.deepseekCooldownEnabled ? "Cooldown เปิดอยู่" : "Cooldown ปิดอยู่"}
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={savingSettings}
+                    onClick={() => updateAppSettings({ ...appSettings, groqEnabled: !appSettings.groqEnabled })}
+                    className={`inline-flex min-w-[112px] items-center justify-center rounded-md px-4 py-2.5 text-sm font-semibold transition disabled:opacity-50 ${
+                      appSettings.groqEnabled ? "bg-[#dc2626] text-white" : "border border-[#0d1b2e]/15 bg-white text-[#0d1b2e] hover:bg-[#eef3f8]"
+                    }`}
+                  >
+                    {savingSettings ? <Loader2 className="mr-2 animate-spin" size={16} /> : null}
+                    {appSettings.groqEnabled ? "Groq เปิดอยู่" : "Groq ปิดอยู่"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={savingSettings}
+                    onClick={() => updateAppSettings({ ...appSettings, deepseekCooldownEnabled: !appSettings.deepseekCooldownEnabled })}
+                    className={`inline-flex min-w-[128px] items-center justify-center rounded-md px-4 py-2.5 text-sm font-semibold transition disabled:opacity-50 ${
+                      appSettings.deepseekCooldownEnabled ? "bg-[#0d1b2e] text-white" : "border border-[#0d1b2e]/15 bg-white text-[#0d1b2e] hover:bg-[#eef3f8]"
+                    }`}
+                  >
+                    {appSettings.deepseekCooldownEnabled ? "Cooldown เปิดอยู่" : "Cooldown ปิดอยู่"}
+                  </button>
+                  <label className="inline-flex items-center gap-2 rounded-md border border-[#0d1b2e]/15 bg-white px-3 py-2 text-sm text-[#42526a]">
+                    ครบ
+                    <input
+                      type="number"
+                      min={1}
+                      max={20}
+                      value={appSettings.deepseekCooldownLimit}
+                      onChange={(event) => setAppSettings((current) => ({ ...current, deepseekCooldownLimit: Math.max(1, Math.min(20, Number(event.target.value) || 1)) }))}
+                      onBlur={() => updateAppSettings(appSettings)}
+                      className="h-8 w-16 rounded border border-[#0d1b2e]/15 px-2 text-center text-[#0d1b2e] outline-none focus:border-[#dc2626]"
+                    />
+                    ครั้ง
+                  </label>
+                </div>
               </div>
             </section>
             <section className="rounded-lg border border-[#0d1b2e]/10 bg-white p-5">

@@ -32,4 +32,6 @@ export type ResponseLanguage = "th" | "en" | "zh";
 
 export type AppSettings = {
   deepseekCooldownEnabled: boolean;
+  deepseekCooldownLimit: number;
+  groqEnabled: boolean;
 };

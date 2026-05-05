@@ -5,13 +5,18 @@ export const SETTINGS_DOCUMENT_TITLE = "__ptech_app_settings__";
 
 const DEFAULT_SETTINGS: AppSettings = {
   deepseekCooldownEnabled: false,
+  deepseekCooldownLimit: 1,
+  groqEnabled: false,
 };
 
 function normalizeSettings(value: unknown): AppSettings {
   if (!value || typeof value !== "object") return DEFAULT_SETTINGS;
   const settings = value as Partial<AppSettings>;
+  const cooldownLimit = Number(settings.deepseekCooldownLimit);
   return {
     deepseekCooldownEnabled: Boolean(settings.deepseekCooldownEnabled),
+    deepseekCooldownLimit: Number.isFinite(cooldownLimit) ? Math.min(20, Math.max(1, Math.round(cooldownLimit))) : DEFAULT_SETTINGS.deepseekCooldownLimit,
+    groqEnabled: Boolean(settings.groqEnabled),
   };
 }
 

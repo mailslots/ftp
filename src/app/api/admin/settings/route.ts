@@ -17,9 +17,15 @@ export async function GET() {
 export async function PUT(request: Request) {
   try {
     await requireAdminSession();
-    const body = (await request.json()) as { deepseekCooldownEnabled?: unknown };
+    const body = (await request.json()) as {
+      deepseekCooldownEnabled?: unknown;
+      deepseekCooldownLimit?: unknown;
+      groqEnabled?: unknown;
+    };
     const settings = await updateAppSettings({
       deepseekCooldownEnabled: Boolean(body.deepseekCooldownEnabled),
+      deepseekCooldownLimit: Number(body.deepseekCooldownLimit),
+      groqEnabled: Boolean(body.groqEnabled),
     });
     return NextResponse.json({ settings });
   } catch (error) {

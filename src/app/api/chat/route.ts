@@ -35,7 +35,6 @@ type ChatIntent =
 
 const spamStates = new Map<string, SpamState>();
 const deepseekCooldownStates = new Map<string, DeepSeekCooldownState>();
-const DEEPSEEK_COOLDOWN_LIMIT = 3;
 const DEEPSEEK_COOLDOWN_MS = 60_000;
 
 function getClientKey(request: Request, clientId: string) {
@@ -107,12 +106,24 @@ function isDeepSeekProvider(provider: string) {
   return /deepseek/i.test(provider);
 }
 
-function providerStatus(provider: string) {
-  return isDeepSeekProvider(provider) ? "deepseek" : "gemini";
+function isGroqProvider(provider: string) {
+  return /^groq:/i.test(provider);
 }
 
-function recordDeepSeekUse(request: Request, clientId: string, enabled: boolean, provider: string) {
+function providerStatus(provider: string) {
+  if (isDeepSeekProvider(provider)) return "deepseek";
+  if (isGroqProvider(provider)) return "groq";
+  return "gemini";
+}
+
+function groqRank(provider: string) {
+  const match = provider.match(/rank-(\d+)/i);
+  return match ? Math.max(1, Math.min(12, Number(match[1]))) : null;
+}
+
+function recordDeepSeekUse(request: Request, clientId: string, enabled: boolean, limit: number, provider: string) {
   if (!enabled) return null;
+  const cooldownLimit = Math.max(1, Math.round(limit || 1));
   const key = getClientKey(request, clientId);
   const state = deepseekCooldownStates.get(key) ?? { count: 0, lockedUntil: 0 };
   if (!isDeepSeekProvider(provider)) {
@@ -121,7 +132,7 @@ function recordDeepSeekUse(request: Request, clientId: string, enabled: boolean,
   }
 
   state.count += 1;
-  if (state.count >= DEEPSEEK_COOLDOWN_LIMIT) {
+  if (state.count >= cooldownLimit) {
     state.count = 0;
     state.lockedUntil = Date.now() + DEEPSEEK_COOLDOWN_MS;
   }
@@ -133,16 +144,18 @@ function chatResponse(
   request: Request,
   clientId: string,
   cooldownEnabled: boolean,
+  cooldownLimit: number,
   body: {
     answer: string;
     provider: string;
     sources: Array<{ id: string; title: string; type: string }>;
   },
 ) {
-  const cooldownLockedUntil = recordDeepSeekUse(request, clientId, cooldownEnabled, body.provider);
+  const cooldownLockedUntil = recordDeepSeekUse(request, clientId, cooldownEnabled, cooldownLimit, body.provider);
   return NextResponse.json({
     ...body,
     providerStatus: providerStatus(body.provider),
+    providerRank: groqRank(body.provider),
     cooldownLockedUntil,
   });
 }
@@ -914,8 +927,13 @@ export async function POST(request: Request) {
     }
 
     let cooldownEnabled = false;
+    let cooldownLimit = 1;
+    let groqEnabled = false;
     try {
-      cooldownEnabled = (await getAppSettings()).deepseekCooldownEnabled;
+      const settings = await getAppSettings();
+      cooldownEnabled = settings.deepseekCooldownEnabled;
+      cooldownLimit = settings.deepseekCooldownLimit;
+      groqEnabled = settings.groqEnabled;
     } catch {}
 
     const deepseekCooldownCheck = checkDeepSeekCooldown(request, clientKey, cooldownEnabled);
@@ -1030,8 +1048,8 @@ export async function POST(request: Request) {
       }
       const directRetireAnswer = retireCheckAnswer || answerAiReadyQuestion("รีไทร์ พ้นสภาพ เกรดเฉลี่ย GPA หน่วยกิต", chunks);
       if (!directRetireAnswer) {
-        const result = await askModel({ messages: cleanMessages, chunks, language });
-        return chatResponse(request, clientKey, cooldownEnabled, {
+        const result = await askModel({ messages: cleanMessages, chunks, language, groqEnabled });
+        return chatResponse(request, clientKey, cooldownEnabled, cooldownLimit, {
           answer: presentAnswer(result.answer, language),
           provider: result.provider,
           sources: chunks.map((chunk) => ({
@@ -1077,8 +1095,8 @@ export async function POST(request: Request) {
         });
       }
 
-      const result = await askModel({ messages: cleanMessages, chunks: scopedChunks, language });
-      return chatResponse(request, clientKey, cooldownEnabled, {
+      const result = await askModel({ messages: cleanMessages, chunks: scopedChunks, language, groqEnabled });
+      return chatResponse(request, clientKey, cooldownEnabled, cooldownLimit, {
         answer: presentAnswer(result.answer, language),
         provider: result.provider,
         sources: scopedChunks.map((chunk) => ({
@@ -1106,8 +1124,8 @@ export async function POST(request: Request) {
         });
       }
 
-      const result = await askModel({ messages: cleanMessages, chunks, language });
-      return chatResponse(request, clientKey, cooldownEnabled, {
+      const result = await askModel({ messages: cleanMessages, chunks, language, groqEnabled });
+      return chatResponse(request, clientKey, cooldownEnabled, cooldownLimit, {
         answer: presentAnswer(result.answer, language),
         provider: result.provider,
         sources: chunks.map((chunk) => ({
@@ -1167,8 +1185,8 @@ export async function POST(request: Request) {
     }
 
     const modelChunks = isKnowledgeIntent(knowledgeQuery) ? chunks : [];
-    const result = await askModel({ messages: cleanMessages, chunks: modelChunks, language });
-    return chatResponse(request, clientKey, cooldownEnabled, {
+    const result = await askModel({ messages: cleanMessages, chunks: modelChunks, language, groqEnabled });
+    return chatResponse(request, clientKey, cooldownEnabled, cooldownLimit, {
       answer: presentAnswer(result.answer, language),
       provider: result.provider,
       sources: modelChunks.map((chunk) => ({

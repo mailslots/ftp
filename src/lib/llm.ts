@@ -9,6 +9,41 @@ const BASIC_KNOWLEDGE = `
 สุขภาพใจฉุกเฉิน: ถ้าผู้ใช้เสี่ยงทำร้ายตัวเองหรือไม่ปลอดภัย ให้แนะนำให้ติดต่อคนใกล้ตัวทันที โทร 1323 สายด่วนสุขภาพจิต หรือ 1669/โรงพยาบาลใกล้ที่สุด.
 `;
 
+const GEMINI_MODELS = [
+  "gemini-3.1-flash-lite",
+  "gemini-2.5-flash-lite",
+  "gemini-3-flash",
+  "gemini-2.5-flash",
+  "gemini-2.5-flash-tts",
+];
+
+const GROQ_MODELS = [
+  "groq/compound",
+  "openai/gpt-oss-120b",
+  "llama-3.3-70b-versatile",
+  "qwen/qwen3-32b",
+  "groq/compound-mini",
+  "allam-2-7b",
+  "llama-3.1-8b-instant",
+  "meta-llama/llama-prompt-guard-2-22m",
+  "meta-llama/llama-prompt-guard-2-86m",
+  "openai/gpt-oss-120b",
+  "openai/gpt-oss-20b",
+  "openai/gpt-oss-safeguard-20b",
+];
+
+function configuredList(value: string | undefined, fallback: string[]) {
+  const models = value
+    ?.split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+  return models?.length ? models : fallback;
+}
+
+function hasUsableKey(value: string | undefined): value is string {
+  return Boolean(value && !value.includes("replace-with"));
+}
+
 function languageInstruction(language: ResponseLanguage) {
   if (language === "en") {
     return [
@@ -73,10 +108,6 @@ function toOpenAiMessages(systemPrompt: string, messages: ChatMessage[]) {
       content: message.content,
     })),
   ];
-}
-
-function isRateLimitOrQuota(status: number, detail: string) {
-  return status === 429 || status === 403 || /rate|quota|limit|resource_exhausted/i.test(detail);
 }
 
 async function callGemini(input: {
@@ -177,10 +208,57 @@ async function callDeepSeek(input: {
   };
 }
 
+async function callGroq(input: {
+  apiKey: string;
+  model: string;
+  apiBase: string;
+  systemPrompt: string;
+  messages: ChatMessage[];
+}) {
+  const response = await fetch(`${input.apiBase.replace(/\/$/, "")}/chat/completions`, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${input.apiKey}`,
+      "content-type": "application/json",
+    },
+    signal: AbortSignal.timeout(25_000),
+    body: JSON.stringify({
+      model: input.model,
+      messages: toOpenAiMessages(input.systemPrompt, input.messages),
+      temperature: 0.3,
+      max_tokens: 750,
+    }),
+  });
+
+  if (!response.ok) {
+    const detail = await response.text();
+    return {
+      ok: false as const,
+      status: response.status,
+      detail: detail.slice(0, 500),
+    };
+  }
+
+  const data = (await response.json()) as {
+    choices?: Array<{
+      message?: {
+        content?: string;
+      };
+    }>;
+  };
+
+  return {
+    ok: true as const,
+    answer: data.choices?.[0]?.message?.content?.trim() || "",
+    provider: `groq:${input.model}`,
+  };
+}
+
 export async function askModel(input: {
   messages: ChatMessage[];
   chunks: KnowledgeChunk[];
   language?: ResponseLanguage;
+  groqEnabled?: boolean;
 }) {
   const context = input.chunks
     .map((chunk, index) => {
@@ -190,7 +268,10 @@ export async function askModel(input: {
     .join("\n\n");
 
   const geminiApiKey = process.env.GEMINI_API_KEY;
-  const geminiModel = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  const geminiModels = configuredList(process.env.GEMINI_MODELS || process.env.GEMINI_MODEL, GEMINI_MODELS);
+  const groqApiKey = process.env.GROQ_API_KEY;
+  const groqModels = configuredList(process.env.GROQ_MODELS, GROQ_MODELS);
+  const groqApiBase = process.env.GROQ_API_BASE || "https://api.groq.com/openai/v1";
   const deepseekApiKey = process.env.DEEPSEEK_API_KEY;
   const deepseekModel = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash";
   const deepseekApiBase = process.env.DEEPSEEK_API_BASE || "https://api.deepseek.com";
@@ -208,7 +289,7 @@ export async function askModel(input: {
   const language = input.language ?? "th";
   const systemPrompt = buildSystemPrompt(context, input.chunks.length > 0, language);
 
-  if (!geminiApiKey || geminiApiKey.includes("replace-with")) {
+  if (!hasUsableKey(geminiApiKey)) {
     return {
       answer: fallbackAnswer(lastMessage, input.chunks, language),
       provider: "local-fallback",
@@ -216,24 +297,49 @@ export async function askModel(input: {
   }
 
   try {
-    const gemini = await callGemini({
-      apiKey: geminiApiKey,
-      model: geminiModel,
-      systemPrompt,
-      messages: enrichedMessages,
-    });
+    let lastGemini:
+      | Awaited<ReturnType<typeof callGemini>>
+      | { ok: false; status: number; detail: string } = { ok: false, status: 500, detail: "gemini not called" };
 
-    if (gemini.ok && gemini.answer) {
-      return {
-        answer: gemini.answer,
-        provider: gemini.provider,
-      };
+    for (const model of geminiModels) {
+      const gemini = await callGemini({
+        apiKey: geminiApiKey,
+        model,
+        systemPrompt,
+        messages: enrichedMessages,
+      });
+      lastGemini = gemini;
+
+      if (gemini.ok && gemini.answer) {
+        return {
+          answer: gemini.answer,
+          provider: gemini.provider,
+        };
+      }
+    }
+
+    if (input.groqEnabled && hasUsableKey(groqApiKey)) {
+      for (let index = 0; index < groqModels.length; index += 1) {
+        const groq = await callGroq({
+          apiKey: groqApiKey,
+          model: groqModels[index],
+          apiBase: groqApiBase,
+          systemPrompt,
+          messages: enrichedMessages,
+        });
+
+        if (groq.ok && groq.answer) {
+          return {
+            answer: groq.answer,
+            provider: `${groq.provider}:rank-${index + 1}-after-gemini-limit`,
+          };
+        }
+      }
     }
 
     if (
       deepseekApiKey &&
-      !deepseekApiKey.includes("replace-with") &&
-      (gemini.ok || isRateLimitOrQuota(gemini.status, gemini.detail))
+      hasUsableKey(deepseekApiKey)
     ) {
       const deepseek = await callDeepSeek({
         apiKey: deepseekApiKey,
@@ -259,11 +365,32 @@ export async function askModel(input: {
 
     return {
       answer: fallbackAnswer(lastMessage, input.chunks, language),
-      provider: gemini.ok ? "gemini-empty-fallback" : `gemini-fallback-${gemini.status}`,
-      detail: gemini.ok ? "" : gemini.detail.slice(0, 300),
+      provider: lastGemini.ok ? "gemini-empty-fallback" : `gemini-fallback-${lastGemini.status}`,
+      detail: lastGemini.ok ? "" : lastGemini.detail.slice(0, 300),
     };
   } catch (error) {
-    if (deepseekApiKey && !deepseekApiKey.includes("replace-with")) {
+    if (input.groqEnabled && hasUsableKey(groqApiKey)) {
+      for (let index = 0; index < groqModels.length; index += 1) {
+        try {
+          const groq = await callGroq({
+            apiKey: groqApiKey,
+            model: groqModels[index],
+            apiBase: groqApiBase,
+            systemPrompt,
+            messages: enrichedMessages,
+          });
+
+          if (groq.ok && groq.answer) {
+            return {
+              answer: groq.answer,
+              provider: `${groq.provider}:rank-${index + 1}-after-gemini-error`,
+            };
+          }
+        } catch {}
+      }
+    }
+
+    if (hasUsableKey(deepseekApiKey)) {
       try {
         const deepseek = await callDeepSeek({
           apiKey: deepseekApiKey,
