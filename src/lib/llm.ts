@@ -32,9 +32,11 @@ export const GROQ_MODELS = [
   "openai/gpt-oss-safeguard-20b",
 ];
 
+export const OPENROUTER_MODELS = ["meta-llama/llama-3.3-70b-instruct:free"];
+
 export const DEEPSEEK_MODELS = ["deepseek-v4-flash"];
 
-export type AiProvider = "gemini" | "groq" | "deepseek";
+export type AiProvider = "gemini" | "groq" | "openrouter" | "deepseek";
 
 export type AiModelEntry = {
   provider: AiProvider;
@@ -56,8 +58,9 @@ function sequenceItems(provider: AiProvider, models: string[]) {
 export function getAiModelSequence(settings: AiRoutingSettings = {}): AiModelEntry[] {
   const gemini = sequenceItems("gemini", GEMINI_MODELS);
   const groq = sequenceItems("groq", GROQ_MODELS);
+  const openrouter = sequenceItems("openrouter", OPENROUTER_MODELS);
   const deepseek = sequenceItems("deepseek", DEEPSEEK_MODELS);
-  const base = settings.groqEnabled ? [...groq, ...gemini, ...deepseek] : [...gemini, ...groq, ...deepseek];
+  const base = settings.groqEnabled ? [...groq, ...gemini, ...openrouter, ...deepseek] : [...gemini, ...groq, ...openrouter, ...deepseek];
   return base.map((item, index) => ({ ...item, order: index + 1 }));
 }
 
@@ -292,6 +295,54 @@ async function callGroq(input: {
   };
 }
 
+async function callOpenRouter(input: {
+  apiKey: string;
+  model: string;
+  apiBase: string;
+  systemPrompt: string;
+  messages: ChatMessage[];
+}) {
+  const response = await fetch(`${input.apiBase.replace(/\/$/, "")}/chat/completions`, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${input.apiKey}`,
+      "content-type": "application/json",
+      "http-referer": process.env.NEXT_PUBLIC_SITE_URL || "https://ftpchat.vercel.app",
+      "x-title": "PTech Take Care",
+    },
+    signal: AbortSignal.timeout(25_000),
+    body: JSON.stringify({
+      model: input.model,
+      messages: toOpenAiMessages(input.systemPrompt, input.messages),
+      temperature: 0.3,
+      max_tokens: 750,
+    }),
+  });
+
+  if (!response.ok) {
+    const detail = await response.text();
+    return {
+      ok: false as const,
+      status: response.status,
+      detail: detail.slice(0, 500),
+    };
+  }
+
+  const data = (await response.json()) as {
+    choices?: Array<{
+      message?: {
+        content?: string;
+      };
+    }>;
+  };
+
+  return {
+    ok: true as const,
+    answer: data.choices?.[0]?.message?.content?.trim() || "",
+    provider: `openrouter:${input.model}`,
+  };
+}
+
 export async function askModel(input: {
   messages: ChatMessage[];
   chunks: KnowledgeChunk[];
@@ -312,6 +363,9 @@ export async function askModel(input: {
   const groqApiKey = process.env.GROQ_API_KEY;
   const groqModels = configuredList(process.env.GROQ_MODELS, GROQ_MODELS);
   const groqApiBase = process.env.GROQ_API_BASE || "https://api.groq.com/openai/v1";
+  const openrouterApiKey = process.env.OPENROUTER_API_KEY;
+  const openrouterModels = configuredList(process.env.OPENROUTER_MODELS || process.env.OPENROUTER_MODEL, OPENROUTER_MODELS);
+  const openrouterApiBase = process.env.OPENROUTER_API_BASE || "https://openrouter.ai/api/v1";
   const deepseekApiKey = process.env.DEEPSEEK_API_KEY;
   const deepseekModels = configuredList(process.env.DEEPSEEK_MODELS || process.env.DEEPSEEK_MODEL, DEEPSEEK_MODELS);
   const deepseekApiBase = process.env.DEEPSEEK_API_BASE || "https://api.deepseek.com";
@@ -331,11 +385,13 @@ export async function askModel(input: {
   const runtimeSequence = getRuntimeAiModelSequence(input).map((entry) => {
     if (entry.provider === "gemini") return { ...entry, model: geminiModels[entry.rank - 1] || entry.model };
     if (entry.provider === "groq") return { ...entry, model: groqModels[entry.rank - 1] || entry.model };
+    if (entry.provider === "openrouter") return { ...entry, model: openrouterModels[entry.rank - 1] || entry.model };
     return { ...entry, model: deepseekModels[entry.rank - 1] || entry.model };
   });
   const hasConfiguredProvider = runtimeSequence.some((entry) => {
     if (entry.provider === "gemini") return hasUsableKey(geminiApiKey);
     if (entry.provider === "groq") return hasUsableKey(groqApiKey);
+    if (entry.provider === "openrouter") return hasUsableKey(openrouterApiKey);
     return hasUsableKey(deepseekApiKey);
   });
 
@@ -382,6 +438,24 @@ export async function askModel(input: {
           };
         }
         if (!groq.ok) lastFailure = groq;
+      }
+
+      if (entry.provider === "openrouter" && hasUsableKey(openrouterApiKey)) {
+        const openrouter = await callOpenRouter({
+          apiKey: openrouterApiKey,
+          model: entry.model,
+          apiBase: openrouterApiBase,
+          systemPrompt,
+          messages: enrichedMessages,
+        });
+
+        if (openrouter.ok && openrouter.answer) {
+          return {
+            answer: openrouter.answer,
+            provider: `${openrouter.provider}:rank-${entry.rank}:order-${entry.order}`,
+          };
+        }
+        if (!openrouter.ok) lastFailure = openrouter;
       }
 
       if (entry.provider === "deepseek" && hasUsableKey(deepseekApiKey)) {

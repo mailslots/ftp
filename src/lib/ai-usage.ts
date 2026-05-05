@@ -36,6 +36,9 @@ function modelKeyFromProvider(provider: string) {
   if (/^groq:/i.test(provider)) {
     return provider.replace(/^groq:/i, "").replace(/:rank-\d+.*/i, "");
   }
+  if (/^openrouter:/i.test(provider)) {
+    return provider.replace(/^openrouter:/i, "").replace(/:rank-\d+.*/i, "");
+  }
   if (/deepseek/i.test(provider)) return "deepseek-v4-flash";
   return provider.replace(/-order-\d+.*/i, "").replace(/-after-.*/i, "").replace(/-fallback-.*/i, "").replace(/-empty.*/i, "");
 }

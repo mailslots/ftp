@@ -23,7 +23,7 @@ type NineQAssessment = {
   created_at: string;
 };
 type NineQMonthlySummary = { month: string; total: number; mild: number; moderate: number; severe: number; q9Risk: number };
-type ProviderMode = "gemini" | "groq" | "deepseek";
+type ProviderMode = "gemini" | "groq" | "openrouter" | "deepseek";
 type AiUsagePeriod = "day" | "month" | "year" | "all";
 type AiUsageRow = { id: string; order: number; provider: ProviderMode; model: string; count: number; used: boolean };
 
@@ -145,6 +145,7 @@ function formatLockRemaining(lockedUntil: number, now: number) {
 
 function thinkingClass(providerMode: ProviderMode, providerRank: number | null) {
   if (providerMode === "deepseek") return "border-purple-200 bg-purple-50 text-purple-700";
+  if (providerMode === "openrouter") return "border-amber-200 bg-amber-50 text-amber-700";
   if (providerMode !== "groq") return "border-emerald-200 bg-emerald-50 text-emerald-700";
   const rank = Math.max(1, Math.min(12, providerRank || 1));
   const scale = [
@@ -386,7 +387,7 @@ export function PTechApp() {
         const lockedUntil = Number(data.lockedUntil);
         localStorage.setItem(spamLockKey, String(lockedUntil));
         setSpamLockedUntil(lockedUntil);
-        if (data.providerStatus === "deepseek" || data.providerStatus === "groq") setProviderMode(data.providerStatus);
+        if (data.providerStatus === "deepseek" || data.providerStatus === "groq" || data.providerStatus === "openrouter") setProviderMode(data.providerStatus);
         if (typeof data.providerRank === "number") setProviderRank(data.providerRank);
         setMessages((current) => [
           ...current,
@@ -401,7 +402,7 @@ export function PTechApp() {
         return;
       }
       if (!response.ok) throw new Error(data.error || "Chat failed");
-      if (data.providerStatus === "gemini" || data.providerStatus === "groq" || data.providerStatus === "deepseek") setProviderMode(data.providerStatus);
+      if (data.providerStatus === "gemini" || data.providerStatus === "groq" || data.providerStatus === "openrouter" || data.providerStatus === "deepseek") setProviderMode(data.providerStatus);
       setProviderRank(typeof data.providerRank === "number" ? data.providerRank : null);
       if (data.cooldownLockedUntil) {
         localStorage.setItem(spamLockKey, String(data.cooldownLockedUntil));
@@ -704,7 +705,7 @@ export function PTechApp() {
                 <div>
                   <h2 className="text-lg font-semibold">ตั้งค่าคิวและโมเดลสำรอง</h2>
                   <p className="text-sm leading-6 text-[#42526a]">
-                    ถ้าปิด Groq ระบบจะลอง Gemini แล้วต่อด้วย Groq ก่อน DeepSeek ถ้าเปิด Groq ระบบจะลอง Groq ก่อน Gemini ส่วน Cooldown จะนับเฉพาะตอนที่ระบบไปถึง DeepSeek
+                    ถ้าปิด Groq ระบบจะลอง Gemini แล้วต่อด้วย Groq และ OpenRouter ก่อน DeepSeek ถ้าเปิด Groq ระบบจะลอง Groq ก่อน Gemini ส่วน Cooldown จะนับเฉพาะตอนที่ระบบไปถึง DeepSeek
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -1004,7 +1005,7 @@ export function PTechApp() {
               <div className="flex items-center justify-between gap-3 border-b border-[#0d1b2e]/10 px-5 py-4">
                 <div>
                   <h2 className="font-semibold">ลำดับ AI และจำนวนครั้งที่ถูกใช้</h2>
-                  <p className="text-sm text-[#42526a]">ค่าเริ่มต้นเป็น By day ปิด Groq = Gemini, Groq, DeepSeek และเปิด Groq = Groq, Gemini, DeepSeek</p>
+                  <p className="text-sm text-[#42526a]">ค่าเริ่มต้นเป็น By day ปิด Groq = Gemini, Groq, OpenRouter, DeepSeek และเปิด Groq = Groq, Gemini, OpenRouter, DeepSeek</p>
                 </div>
                 <button onClick={() => setShowAiUsage(false)} className="rounded-md border border-[#0d1b2e]/10 p-2 text-[#42526a] hover:bg-[#eef3f8]" aria-label="ปิด">
                   <X size={16} />
@@ -1068,7 +1069,7 @@ export function PTechApp() {
                             <td className="px-4 py-3 font-semibold text-[#0d1b2e]">{row.order}</td>
                             <td className="px-4 py-3">
                               <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                                row.provider === "gemini" ? "bg-emerald-50 text-emerald-700" : row.provider === "groq" ? "bg-red-50 text-red-700" : "bg-purple-50 text-purple-700"
+                                row.provider === "gemini" ? "bg-emerald-50 text-emerald-700" : row.provider === "groq" ? "bg-red-50 text-red-700" : row.provider === "openrouter" ? "bg-amber-50 text-amber-700" : "bg-purple-50 text-purple-700"
                               }`}>
                                 {row.provider}
                               </span>

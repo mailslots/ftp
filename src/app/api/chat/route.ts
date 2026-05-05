@@ -111,8 +111,13 @@ function isGroqProvider(provider: string) {
   return /^groq:/i.test(provider);
 }
 
+function isOpenRouterProvider(provider: string) {
+  return /^openrouter:/i.test(provider);
+}
+
 function providerStatus(provider: string) {
   if (isDeepSeekProvider(provider)) return "deepseek";
+  if (isOpenRouterProvider(provider)) return "openrouter";
   if (isGroqProvider(provider)) return "groq";
   return "gemini";
 }
