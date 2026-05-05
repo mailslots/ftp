@@ -1,0 +1,1192 @@
+[
+  {
+    "code": "01-110-004",
+    "thaiTitle": "สังคมกับสิ่งแวดลSอม",
+    "englishTitle": "Society and Environment",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-110-007",
+    "thaiTitle": "การสื่อสารกับสังคม",
+    "englishTitle": "Communication and Society",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-110-009",
+    "thaiTitle": "การพัฒนาคุณภาพชีวิตและสังคม",
+    "englishTitle": "Quality of Life and Society Development",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-110-017",
+    "thaiTitle": "คุณภาพชีวิตที่ดีของพลเมืองยุคใหมQ",
+    "englishTitle": "Quality of Life for New Generation",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-110-020",
+    "thaiTitle": "หนึ่งเสียง สรSางพลังสังคม",
+    "englishTitle": "One Voice for Social Empowerment",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-110-021",
+    "thaiTitle": "ชีวิตในสังคมพหุวัฒนธรรม",
+    "englishTitle": "Life in Multicultural Society",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-110-022",
+    "thaiTitle": "มองสังคมอยQางนักวิจัย",
+    "englishTitle": "Sociological Perspective as a Researcher",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-110-023",
+    "thaiTitle": "พลเมืองที่ดีตามวิถีประชาธิปไตย",
+    "englishTitle": "Good Citizen by Democratic Way",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-110-024",
+    "thaiTitle": "ชีวิตที่พอเพียงกับภูมิปXญญาไทย",
+    "englishTitle": "Sufficiency Life with Thai Wisdom",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-110-025",
+    "thaiTitle": "สังคมที่เปJนมิตรกับสิ่งแวดลSอม",
+    "englishTitle": "Eco-friendly Society",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-110-026",
+    "thaiTitle": "อาเซียนในยุคศตวรรษที่ 21",
+    "englishTitle": "ASEAN in the 21st Century",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-110-027",
+    "thaiTitle": "สังคมกับเศรษฐกิจ",
+    "englishTitle": "Society and Economy",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-110-029",
+    "thaiTitle": "อัตลักษณ?การเมืองกับพลเมืองยุคใหมQ",
+    "englishTitle": "Political Identity and Modern Citizens",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-110-030",
+    "thaiTitle": "ชีวิตติดเทร็นด?",
+    "englishTitle": "Trendy Life",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "00-100-102",
+    "thaiTitle": "อัตลักษณ?แหQงราชมงคลธัญบุรี",
+    "englishTitle": "RMUTT Identity",
+    "credits": "3(2-2-5)",
+    "creditUnits": 3,
+    "theoryHours": 2,
+    "practiceHours": 2,
+    "selfStudyHours": 5
+  },
+  {
+    "code": "01-210-007",
+    "thaiTitle": "ตรรกะในชีวิตประจำวัน",
+    "englishTitle": "Logic in Daily Life",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-210-017",
+    "thaiTitle": "สารสนเทศและการเขียนรายงานทางวิชาการ",
+    "englishTitle": "Information and Academic Report Writing",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-210-018",
+    "thaiTitle": "การสืบคSนสารสนเทศ",
+    "englishTitle": "Information Retrieval",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-210-022",
+    "thaiTitle": "วิถีธรรมวิถีไทย",
+    "englishTitle": "The way of Thai Ethics",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-210-023",
+    "thaiTitle": "มหัศจรรย?แหQงรัก",
+    "englishTitle": "Miracle of Love",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-210-024",
+    "thaiTitle": "ทักษะการเรียนรูSสูQความสำเร็จ",
+    "englishTitle": "Learning Skills to Success",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-210-025",
+    "thaiTitle": "มองชีวิตผQานฟล?ม",
+    "englishTitle": "Life on Films",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-210-028",
+    "thaiTitle": "การรูSเทQาทันสารสนเทศในยุคดิจิทัล",
+    "englishTitle": "Information Literacy in Digital Age",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-210-029",
+    "thaiTitle": "จิตวิทยาเพื่อชีวิตที่งดงาม",
+    "englishTitle": "Psychology for Beautiful Life",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-210-030",
+    "thaiTitle": "ดุลยภาพแหQงชีวิต",
+    "englishTitle": "Balance of Life",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-210-031",
+    "thaiTitle": "คุณคQาของชีวิตและจริยธรรมในวิชาชีพ",
+    "englishTitle": "Value of Life and Professional Ethics",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-210-032",
+    "thaiTitle": "การใชSเหตุผลและจริยศาสตร?",
+    "englishTitle": "Reasoning and Ethics",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-210-033",
+    "thaiTitle": "บุคลิกภาพสูQความสำเร็จ",
+    "englishTitle": "Personality to Success",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-610-003",
+    "thaiTitle": "นันทนาการ",
+    "englishTitle": "Recreation",
+    "credits": "1(0-2-1)",
+    "creditUnits": 1,
+    "theoryHours": 0,
+    "practiceHours": 2,
+    "selfStudyHours": 1
+  },
+  {
+    "code": "01-610-005",
+    "thaiTitle": "การจัดการคQายพักแรม",
+    "englishTitle": "Camp Management",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-610-006",
+    "thaiTitle": "การฝกดSวยน้ำหนักเพื่อสุขภาพ",
+    "englishTitle": "Weight Training for Health",
+    "credits": "3(2-2-5)",
+    "creditUnits": 3,
+    "theoryHours": 2,
+    "practiceHours": 2,
+    "selfStudyHours": 5
+  },
+  {
+    "code": "01-610-007",
+    "thaiTitle": "ดำน้ำตื้นเบื้องตSน",
+    "englishTitle": "Basic Skin Diving",
+    "credits": "3(2-2-5)",
+    "creditUnits": 3,
+    "theoryHours": 2,
+    "practiceHours": 2,
+    "selfStudyHours": 5
+  },
+  {
+    "code": "01-610-008",
+    "thaiTitle": "ลีลาศเพื่อสุขภาพ",
+    "englishTitle": "Social Dance for Health",
+    "credits": "3(2-2-5)",
+    "creditUnits": 3,
+    "theoryHours": 2,
+    "practiceHours": 2,
+    "selfStudyHours": 5
+  },
+  {
+    "code": "01-610-009",
+    "thaiTitle": "สุขภาพเพื่อชีวิต",
+    "englishTitle": "Health for Life",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-610-012",
+    "thaiTitle": "สุขภาพเพื่อการดำรงชีวิตสำหรับคนรุQนใหมQ",
+    "englishTitle": "Health for New Generation Living",
+    "credits": "3(2-2-5)",
+    "creditUnits": 3,
+    "theoryHours": 2,
+    "practiceHours": 2,
+    "selfStudyHours": 5
+  },
+  {
+    "code": "01-610-013",
+    "thaiTitle": "การควบคุมน้ำหนักและรูปรQางเพื่อสุขภาพ",
+    "englishTitle": "Weight and Body Shapes Control for Health",
+    "credits": "3(2-2-5)",
+    "creditUnits": 3,
+    "theoryHours": 2,
+    "practiceHours": 2,
+    "selfStudyHours": 5
+  },
+  {
+    "code": "01-610-014",
+    "thaiTitle": "ทักษะกีฬาเพื่อสุขภาพ",
+    "englishTitle": "Sports Skills for Health",
+    "credits": "1(0-2-1)",
+    "creditUnits": 1,
+    "theoryHours": 0,
+    "practiceHours": 2,
+    "selfStudyHours": 1
+  },
+  {
+    "code": "01-610-015",
+    "thaiTitle": "กิจกรรมทางน้ำเพื่อสุขภาพ",
+    "englishTitle": "Water Activities for Health",
+    "credits": "3(2-2-5)",
+    "creditUnits": 3,
+    "theoryHours": 2,
+    "practiceHours": 2,
+    "selfStudyHours": 5
+  },
+  {
+    "code": "00-100-203",
+    "thaiTitle": "มหาวิทยาลัยสีเขียว",
+    "englishTitle": "Green University",
+    "credits": "3(2-2-5)",
+    "creditUnits": 3,
+    "theoryHours": 2,
+    "practiceHours": 2,
+    "selfStudyHours": 5
+  },
+  {
+    "code": "00-100-204",
+    "thaiTitle": "การคิดเชิงออกแบบ",
+    "englishTitle": "Design Thinking",
+    "credits": "3(2-2-5)",
+    "creditUnits": 3,
+    "theoryHours": 2,
+    "practiceHours": 2,
+    "selfStudyHours": 5
+  },
+  {
+    "code": "09-000-002",
+    "thaiTitle": "การใชSงานโปรแกรมสำเร็จรูปเพื่องานมัลติมีเดีย",
+    "englishTitle": "Program Package for Multimedia",
+    "credits": "3(2-2-5)",
+    "creditUnits": 3,
+    "theoryHours": 2,
+    "practiceHours": 2,
+    "selfStudyHours": 5
+  },
+  {
+    "code": "09-090-013",
+    "thaiTitle": "การจัดการสารสนเทศเพื่อผูSประกอบการ",
+    "englishTitle": "Information Management for Entrepreneur",
+    "credits": "3(2-2-5)",
+    "creditUnits": 3,
+    "theoryHours": 2,
+    "practiceHours": 2,
+    "selfStudyHours": 5
+  },
+  {
+    "code": "09-111-001",
+    "thaiTitle": "การคิดและการใหSเหตุผล",
+    "englishTitle": "Thinking and Reasoning",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "09-111-002",
+    "thaiTitle": "คณิตศาสตร?เพื่อการทQองเที่ยว",
+    "englishTitle": "Mathematics for Tourism",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "09-111-051",
+    "thaiTitle": "คณิตศาสตร?ในชีวิตประจำวัน",
+    "englishTitle": "Mathematics in Daily Life",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "09-130-002",
+    "thaiTitle": "อินเทอร?เน็ตทุกสรรพสิ่งในชีวิตประจำวัน",
+    "englishTitle": "Internet of Things in Everyday Life",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "09-130-003",
+    "thaiTitle": "ชีวิตดิจิทัล",
+    "englishTitle": "Digital Life",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "09-150-001",
+    "thaiTitle": "ฟาร?มอัจฉริยะและเมืองอัจฉริยะ",
+    "englishTitle": "Smart Farm and Smart City",
+    "credits": "3(2-2-5)",
+    "creditUnits": 3,
+    "theoryHours": 2,
+    "practiceHours": 2,
+    "selfStudyHours": 5
+  },
+  {
+    "code": "09-210-001",
+    "thaiTitle": "เคมีในยุคดิจิทัล",
+    "englishTitle": "Chemistry in Digital Life",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "09-210-003",
+    "thaiTitle": "วิทยาศาสตร? ความคิดสรSางสรรค? และนวัตกรรม",
+    "englishTitle": "Science, Creativity, and Innovation",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "09-210-033",
+    "thaiTitle": "เทคโนโลยีสีเขียว",
+    "englishTitle": "Green Technology",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "09-311-051",
+    "thaiTitle": "ชีวิตและสิ่งแวดลSอม",
+    "englishTitle": "Life and Environment",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "09-410-001",
+    "thaiTitle": "กSาวทันเทคโนโลยี",
+    "englishTitle": "Keep Pace with Technology",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "09-410-003",
+    "thaiTitle": "ตSองรอดกับภัยพิบัติธรรมชาติ",
+    "englishTitle": "Survival with Natural Disaster",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "09-510-001",
+    "thaiTitle": "ชีวิตยุคใหมQและความปลอดภัยอาหาร",
+    "englishTitle": "Modern Life with Food Safety",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-320-001",
+    "thaiTitle": "ภาษาอังกฤษเพื่อการสื่อสาร",
+    "englishTitle": "English for Communication",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-320-002",
+    "thaiTitle": "สนทนาภาษาอังกฤษ",
+    "englishTitle": "English Conversation",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-320-003",
+    "thaiTitle": "การพัฒนาทักษะการอQานภาษาอังกฤษ",
+    "englishTitle": "English Reading Development",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-320-004",
+    "thaiTitle": "การพัฒนาทักษะการเขียนภาษาอังกฤษ",
+    "englishTitle": "English Writing Development",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-320-006",
+    "thaiTitle": "ภาษาอังกฤษเพื่อการสอบแบบทดสอบมาตรฐาน",
+    "englishTitle": "English for Standardized Tests",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-320-007",
+    "thaiTitle": "ภาษาอังกฤษเพื่อการสมัครงาน",
+    "englishTitle": "English for Job Application",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-320-008",
+    "thaiTitle": "ภาษาอังกฤษเพื่อการศึกษาเชิงหรรษา",
+    "englishTitle": "English Edutainment",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-320-009",
+    "thaiTitle": "ภาษาอังกฤษเพื่อการสื่อสารทางธุรกิจ",
+    "englishTitle": "English for Business Communication",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-320-010",
+    "thaiTitle": "ภาษาอังกฤษเพื่ออุตสาหกรรมบริการ",
+    "englishTitle": "English for Service Industry",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-320-011",
+    "thaiTitle": "ภาษาอังกฤษเพื่อวิทยาศาสตร?และเทคโนโลยี",
+    "englishTitle": "English for Science and Technology",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-320-012",
+    "thaiTitle": "ภาษาอังกฤษเพื่อการพยาบาล",
+    "englishTitle": "English for Nursing",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-320-013",
+    "thaiTitle": "ภาษาอังกฤษเพื่องานคหกรรม",
+    "englishTitle": "English for Home Economics",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-320-014",
+    "thaiTitle": "ภาษาอังกฤษเพื่องานวิศวกรรม",
+    "englishTitle": "English for Engineering",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-320-015",
+    "thaiTitle": "ภาษาอังกฤษเพื่องานเทคโนโลยีการเกษตร",
+    "englishTitle": "English for Agricultural Technology",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-320-016",
+    "thaiTitle": "ภาษาอังกฤษเพื่องานศิลปกรรม",
+    "englishTitle": "English for Fine and Applied Arts",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-320-017",
+    "thaiTitle": "ภาษาอังกฤษเพื่อการแพทย?บูรณาการ",
+    "englishTitle": "English for Integrative Medicine",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-320-018",
+    "thaiTitle": "ภาษาอังกฤษเพื่องานสถาปXตยกรรม",
+    "englishTitle": "English for Architecture",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-310-001",
+    "thaiTitle": "ภาษาไทยในมิติสังคมปXจจุบัน",
+    "englishTitle": "Thai Language in Today's Society",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-310-002",
+    "thaiTitle": "วรรณกรรมกับชีวิต",
+    "englishTitle": "Literature and Life",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-310-003",
+    "thaiTitle": "การอQานเพื่อการรังสรรค?และเสนอผลงาน",
+    "englishTitle": "Reading for Creativity and Presentation",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-310-008",
+    "thaiTitle": "ภาษากับวัฒนธรรม",
+    "englishTitle": "Language and Culture",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-330-001",
+    "thaiTitle": "ภาษาจีนพื้นฐาน",
+    "englishTitle": "Basic Chinese",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-330-002",
+    "thaiTitle": "การสนทนาภาษาจีนเบื้องตSน",
+    "englishTitle": "Basic Chinese Conversation",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-330-006",
+    "thaiTitle": "ภาษาญี่ปุ«นพื้นฐาน",
+    "englishTitle": "Basic Japanese",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "01-330-007",
+    "thaiTitle": "สนทนาภาษาญี่ปุ«นเบื้องตSน",
+    "englishTitle": "Basic Japanese Conversation",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "00-100-304",
+    "thaiTitle": "นวัตกรรมเพื่อชุมชน",
+    "englishTitle": "Innovation for the Community",
+    "credits": "3(1-4-4)",
+    "creditUnits": 3,
+    "theoryHours": 1,
+    "practiceHours": 4,
+    "selfStudyHours": 4
+  },
+  {
+    "code": "00-100-305",
+    "thaiTitle": "นวัตกรรมเพื่ออุตสาหกรรม",
+    "englishTitle": "Innovation for the Industry",
+    "credits": "3(1-4-4)",
+    "creditUnits": 3,
+    "theoryHours": 1,
+    "practiceHours": 4,
+    "selfStudyHours": 4
+  },
+  {
+    "code": "00-100-103",
+    "thaiTitle": "ความเปJนผูSประกอบการ",
+    "englishTitle": "Entrepreneurship",
+    "credits": "3(2-2-5)",
+    "creditUnits": 3,
+    "theoryHours": 2,
+    "practiceHours": 2,
+    "selfStudyHours": 5
+  },
+  {
+    "code": "05-700-101",
+    "thaiTitle": "เศรษฐศาสตร?ประยุกต?",
+    "englishTitle": "Applied Economics",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "09-121-003",
+    "thaiTitle": "สถิติพื้นฐานสำหรับผูSประกอบการ",
+    "englishTitle": "Basic Statistics for Entrepreneurs",
+    "credits": "3(3-0-6)",
+    "creditUnits": 3,
+    "theoryHours": 3,
+    "practiceHours": 0,
+    "selfStudyHours": 6
+  },
+  {
+    "code": "08-999-101",
+    "thaiTitle": "M300 เทคโนโลยีสื่อใหมQ",
+    "englishTitle": "New Media Technology",
+    "credits": "1(1-0-3)",
+    "creditUnits": 1,
+    "theoryHours": 1,
+    "practiceHours": 0,
+    "selfStudyHours": 3
+  },
+  {
+    "code": "08-999-102",
+    "thaiTitle": "หลักการการออกแบบสรSางสรรค?งานกราฟก",
+    "englishTitle": "Principles of Creative Graphic Design",
+    "credits": "1(1-0-2)",
+    "creditUnits": 1,
+    "theoryHours": 1,
+    "practiceHours": 0,
+    "selfStudyHours": 2
+  },
+  {
+    "code": "08-999-103",
+    "thaiTitle": "ปฏิบัติการออกแบบสรSางสรรค?งานกราฟก",
+    "englishTitle": "Practice on Creative Graphic Design",
+    "credits": "2(0-4-2)",
+    "creditUnits": 2,
+    "theoryHours": 0,
+    "practiceHours": 4,
+    "selfStudyHours": 2
+  },
+  {
+    "code": "08-999-204",
+    "thaiTitle": "การสรSางสรรค?ดิจิทัลคอนเทนต?",
+    "englishTitle": "Digital Content Creation",
+    "credits": "3(2-3-5)",
+    "creditUnits": 3,
+    "theoryHours": 2,
+    "practiceHours": 3,
+    "selfStudyHours": 5
+  },
+  {
+    "code": "08-160-105",
+    "thaiTitle": "M300 วิธีการบีบอัดและแปลงไฟล?",
+    "englishTitle": "How to Compress and Convert Files",
+    "credits": "1(1-0-2)",
+    "creditUnits": 1,
+    "theoryHours": 1,
+    "practiceHours": 0,
+    "selfStudyHours": 2
+  },
+  {
+    "code": "08-160-106",
+    "thaiTitle": "M300 การถQายภาพเพื่อการสื่อสาร",
+    "englishTitle": "Photography for Communication",
+    "credits": "1(1-0-2)",
+    "creditUnits": 1,
+    "theoryHours": 1,
+    "practiceHours": 0,
+    "selfStudyHours": 2
+  },
+  {
+    "code": "08-160-107",
+    "thaiTitle": "M300 เทคนิคการถายภาพในสถานการณตางๆ",
+    "englishTitle": "Photography Techniques in Various Situations",
+    "credits": "1(0-2-2)",
+    "creditUnits": 1,
+    "theoryHours": 0,
+    "practiceHours": 2,
+    "selfStudyHours": 2
+  },
+  {
+    "code": "08-160-108",
+    "thaiTitle": "M100 การออกแบบและการบันทึกเสียง",
+    "englishTitle": "Sound Design and Sound Recording",
+    "credits": "1(1-0-2)",
+    "creditUnits": 1,
+    "theoryHours": 1,
+    "practiceHours": 0,
+    "selfStudyHours": 2
+  },
+  {
+    "code": "08-161-108",
+    "thaiTitle": "M200 การตัดตอและการปรับแตงเสียง",
+    "englishTitle": "Editing and Equalizing Technology",
+    "credits": "1(0-2-1)",
+    "creditUnits": 1,
+    "theoryHours": 0,
+    "practiceHours": 2,
+    "selfStudyHours": 1
+  },
+  {
+    "code": "08-160-109",
+    "thaiTitle": "M100 การฝกปฏิบัติการผลิตสื่อเสียง",
+    "englishTitle": "Practice on Sound Production.",
+    "credits": "1(0-2-1)",
+    "creditUnits": 1,
+    "theoryHours": 0,
+    "practiceHours": 2,
+    "selfStudyHours": 1
+  },
+  {
+    "code": "08-160-110",
+    "thaiTitle": "M300 การวิเคราะห?ภาพยนตร?เบื้องตSน",
+    "englishTitle": "Basic Film Analysis",
+    "credits": "1(1-0-2)",
+    "creditUnits": 1,
+    "theoryHours": 1,
+    "practiceHours": 0,
+    "selfStudyHours": 2
+  },
+  {
+    "code": "08-160-211",
+    "thaiTitle": "M300 การบริหารงบประมาณและบุคคลในการผลิตสื่อ",
+    "englishTitle": "Budget Management and Media Production Personnel",
+    "credits": "1(1-0-2)",
+    "creditUnits": 1,
+    "theoryHours": 1,
+    "practiceHours": 0,
+    "selfStudyHours": 2
+  },
+  {
+    "code": "08-160-212",
+    "thaiTitle": "M100 เทคนิคการจัดแสงสำหรับภาพนิ่งและภาพเคลื่อนไหว",
+    "englishTitle": "Lighting Techniques for Photography and Motion Picture",
+    "credits": "1(1-0-2)",
+    "creditUnits": 1,
+    "theoryHours": 1,
+    "practiceHours": 0,
+    "selfStudyHours": 2
+  },
+  {
+    "code": "08-160-213",
+    "thaiTitle": "M200 ปฏิบัติการการออกแบบการจัดแสง",
+    "englishTitle": "Lighting Design Practice",
+    "credits": "1(0-2-1)",
+    "creditUnits": 1,
+    "theoryHours": 0,
+    "practiceHours": 2,
+    "selfStudyHours": 1
+  },
+  {
+    "code": "08-160-214",
+    "thaiTitle": "M200 หลักการควบคุมและถQายทำดSวยกลSองถQายทำภาพเคลื่อนไหว",
+    "englishTitle": "Principles Control and Operation With Motion Picture Camera",
+    "credits": "1(1-0-2)",
+    "creditUnits": 1,
+    "theoryHours": 1,
+    "practiceHours": 0,
+    "selfStudyHours": 2
+  },
+  {
+    "code": "08-160-215",
+    "thaiTitle": "M200 ปฏิบัติการถQายทำดSวยกลSองถQายทำภาพเคลื่อนไหว",
+    "englishTitle": "Practice on Operation with Motion Picture Camera",
+    "credits": "1(1-0-2)",
+    "creditUnits": 1,
+    "theoryHours": 1,
+    "practiceHours": 0,
+    "selfStudyHours": 2
+  },
+  {
+    "code": "08-160-216",
+    "thaiTitle": "M300 การผลิตรายการในสตูดิโอ",
+    "englishTitle": "Production of Programs in the Studio",
+    "credits": "1(0-2-1)",
+    "creditUnits": 1,
+    "theoryHours": 0,
+    "practiceHours": 2,
+    "selfStudyHours": 1
+  },
+  {
+    "code": "08-160-217",
+    "thaiTitle": "M300 การเกลี่ยสีกับงานตัดตQอ",
+    "englishTitle": "Color Grading With Editing Work",
+    "credits": "1(1-0-2)",
+    "creditUnits": 1,
+    "theoryHours": 1,
+    "practiceHours": 0,
+    "selfStudyHours": 2
+  },
+  {
+    "code": "08-160-218",
+    "thaiTitle": "M200 การปรับแตQงสัญญาณภาพและเสียง",
+    "englishTitle": "Adjustment of Video and Audio Signals",
+    "credits": "1(0-2-2)",
+    "creditUnits": 1,
+    "theoryHours": 0,
+    "practiceHours": 2,
+    "selfStudyHours": 2
+  },
+  {
+    "code": "08-160-321",
+    "thaiTitle": "M300 การวิจัยเชิงปริมาณทางสื่อสารมวลชน",
+    "englishTitle": "Quantitative Research in Mass Communication",
+    "credits": "1(1-0-2)",
+    "creditUnits": 1,
+    "theoryHours": 1,
+    "practiceHours": 0,
+    "selfStudyHours": 2
+  },
+  {
+    "code": "08-161-024",
+    "thaiTitle": "M300 การถQายภาพหุQนนิ่ง",
+    "englishTitle": "Still life Photography",
+    "credits": "1(0-2-1)",
+    "creditUnits": 1,
+    "theoryHours": 0,
+    "practiceHours": 2,
+    "selfStudyHours": 1
+  },
+  {
+    "code": "08-161-029",
+    "thaiTitle": "M200 กฎหมายการบิน ขSอพึงปฏิบัติกQอนบิน",
+    "englishTitle": "Aviation Laws, Rules to Follow Before Flying",
+    "credits": "1(0-2-1)",
+    "creditUnits": 1,
+    "theoryHours": 0,
+    "practiceHours": 2,
+    "selfStudyHours": 1
+  },
+  {
+    "code": "08-161-030",
+    "thaiTitle": "M300 การดูแลหลังการถQายภาพ และการตกแตQงภาพถQาย",
+    "englishTitle": "Post-Photography Care and Photo Decoration",
+    "credits": "1(0-2-2)",
+    "creditUnits": 1,
+    "theoryHours": 0,
+    "practiceHours": 2,
+    "selfStudyHours": 2
+  },
+  {
+    "code": "08-161-032",
+    "thaiTitle": "M300 ปฏิบัติการหลังการผลิตภาพยนตร",
+    "englishTitle": "Practice on Post-Production for Film",
+    "credits": "1(0-2-1)",
+    "creditUnits": 1,
+    "theoryHours": 0,
+    "practiceHours": 2,
+    "selfStudyHours": 1
+  },
+  {
+    "code": "08-161-034",
+    "thaiTitle": "M300 เทคนิคหลังการถายทำ และนำเสนอสำหรับภาพยนตรโฆษณา",
+    "englishTitle": "Post-Production Technique and Presented for Advertising Film",
+    "credits": "1(0-2-1)",
+    "creditUnits": 1,
+    "theoryHours": 0,
+    "practiceHours": 2,
+    "selfStudyHours": 1
+  },
+  {
+    "code": "08-161-038",
+    "thaiTitle": "M300 การผลิตรายการแบบออนไลน?สตรีมมิ่ง",
+    "englishTitle": "Online Streaming Program Production",
+    "credits": "1(0-2-1)",
+    "creditUnits": 1,
+    "theoryHours": 0,
+    "practiceHours": 2,
+    "selfStudyHours": 1
+  },
+  {
+    "code": "08-161-041",
+    "thaiTitle": "M300 การผลิตและสรSางฉาก",
+    "englishTitle": "Production and Setting",
+    "credits": "1(0-2-1)",
+    "creditUnits": 1,
+    "theoryHours": 0,
+    "practiceHours": 2,
+    "selfStudyHours": 1
+  },
+  {
+    "code": "08-161-049",
+    "thaiTitle": "M300 การออกอากาศผานสถานีวิทยุดิจิทัล",
+    "englishTitle": "Broadcasting through Digital Radio Stations",
+    "credits": "1(0-2-1)",
+    "creditUnits": 1,
+    "theoryHours": 0,
+    "practiceHours": 2,
+    "selfStudyHours": 1
+  },
+  {
+    "code": "08-161-051",
+    "thaiTitle": "M300 โครงการพัฒนาการเขียนบท",
+    "englishTitle": "Script Writing Development Project",
+    "credits": "1(0-2-1)",
+    "creditUnits": 1,
+    "theoryHours": 0,
+    "practiceHours": 2,
+    "selfStudyHours": 1
+  },
+  {
+    "code": "08-161-053",
+    "thaiTitle": "M300 การพัฒนาบุคลิกภาพ",
+    "englishTitle": "Personality Development",
+    "credits": "1(0-2-1)",
+    "creditUnits": 1,
+    "theoryHours": 0,
+    "practiceHours": 2,
+    "selfStudyHours": 1
+  },
+  {
+    "code": "08-161-054",
+    "thaiTitle": "M300 การวิเคราะห?สื่อและวัฒนธรรม",
+    "englishTitle": "The Analysis of Media and Culture",
+    "credits": "1(1-0-2)",
+    "creditUnits": 1,
+    "theoryHours": 1,
+    "practiceHours": 0,
+    "selfStudyHours": 2
+  },
+  {
+    "code": "08-160-055",
+    "thaiTitle": "M300 ภาพยนตร?แอฟริกาและอเมริกาใตS",
+    "englishTitle": "The Cinemas of Africa and South America",
+    "credits": "1(0-2-1)",
+    "creditUnits": 1,
+    "theoryHours": 0,
+    "practiceHours": 2,
+    "selfStudyHours": 1
+  },
+  {
+    "code": "08-161-056",
+    "thaiTitle": "M200 กระบวนการผลิตรายการข่าวและสารคดี",
+    "englishTitle": "Production Process of News Programs and Documentary",
+    "credits": "1(0-2-1)",
+    "creditUnits": 1,
+    "theoryHours": 0,
+    "practiceHours": 2,
+    "selfStudyHours": 1
+  },
+  {
+    "code": "08-161-057",
+    "thaiTitle": "M300 การกำหนดกลยุทธการสื่อสารตราธุรกิจ",
+    "englishTitle": "Business Brand Communication Strategy Formulation",
+    "credits": "1(0-2-1)",
+    "creditUnits": 1,
+    "theoryHours": 0,
+    "practiceHours": 2,
+    "selfStudyHours": 1
+  }
+]

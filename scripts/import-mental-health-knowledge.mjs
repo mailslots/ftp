@@ -1,0 +1,128 @@
+import { createClient } from "@supabase/supabase-js";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import path from "node:path";
+
+const projectRoot = process.cwd();
+const outputDir = path.join(projectRoot, "data");
+
+async function loadEnv() {
+  const envPath = path.join(projectRoot, ".env.local");
+  try {
+    const text = await readFile(envPath, "utf8");
+    for (const line of text.split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#") || !trimmed.includes("=")) continue;
+      const [key, ...valueParts] = trimmed.split("=");
+      process.env[key] ??= valueParts.join("=").replace(/^"|"$/g, "");
+    }
+  } catch {}
+}
+
+const docs = [
+  {
+    title: "AI READY MIND Counseling RMUTT clinic and mental health support",
+    text: `
+AI READY คลินิกกำลังใจและบริการให้คำปรึกษา RMUTT
+คำถาม: คลินิกกำลังใจคืออะไร?
+คำตอบ: คลินิกกำลังใจเป็นบริการให้คำปรึกษาเชิงจิตวิทยาของ RMUTT สำหรับนักศึกษาที่มีเรื่องไม่สบายใจ เครียด กังวล เศร้า หรือมีปัญหาที่อยากคุยกับผู้เชี่ยวชาญ โดยบอทควรตอบแบบรับฟัง อบอุ่น ไม่ตัดสิน และแนะนำช่องทางติดต่อบริการจริงของมหาวิทยาลัย
+คำถาม: คลินิกกำลังใจติดต่อได้ที่ไหน?
+คำตอบ: ติดต่อบริการให้คำปรึกษา RMUTT ได้ที่ฝ่ายแนะแนวการศึกษาและอาชีพ ชั้น 2 กองพัฒนานักศึกษา วันจันทร์-ศุกร์ เวลา 09.00-16.30 น. Hotline 08 0197 2024 และติดตาม/นัดหมายผ่าน Facebook งานบริการให้คำปรึกษา RMUTT ที่ https://www.facebook.com/profile.php?id=100063935491321
+คำถาม: ถ้าอยากนัดปรึกษาต้องทำอย่างไร?
+คำตอบ: สามารถลงนัดหมายผ่านช่องทางของงานบริการให้คำปรึกษา RMUTT หรือ QR Code ในประกาศ และติดตามข่าวสารผ่าน Facebook งานบริการให้คำปรึกษา RMUTT ที่ https://www.facebook.com/profile.php?id=100063935491321
+คำถาม: ถ้ายังไม่พร้อมคุยกับคลินิกกำลังใจ คุยกับใครก่อนได้?
+คำตอบ: ถ้ายังไม่อยากคุยกับทางคลินิก สามารถเริ่มคุยกับเจ้าหน้าที่ของคณะได้ เช่น พี่ส้มกับพี่แก้ว ทั้งสองคนทำงานอยู่ในฝ่ายพัฒนานักศึกษา และนั่งอยู่ในห้องหน้าคณะ บริเวณใกล้ LED ประชาสัมพันธ์หน้าคณะ ถ้าคิดอะไรไม่ออก ไม่รู้จะเริ่มจากตรงไหน หรืออยากถามเรื่องชีวิตนักศึกษา/ปัญหาเบื้องต้น ก็สามารถติดต่อพี่ส้มกับพี่แก้วก่อนได้
+คำถาม: พี่ส้มกับพี่แก้วช่วยเรื่องอะไรได้บ้าง?
+คำตอบ: พี่ส้มกับพี่แก้วเป็นเจ้าหน้าที่ฝ่ายพัฒนานักศึกษา สามารถเป็นจุดเริ่มต้นให้คำแนะนำ รับฟัง และช่วยประสานต่อได้ ถ้านักศึกษายังไม่สะดวกคุยกับคลินิกกำลังใจโดยตรง หรือยังไม่แน่ใจว่าควรติดต่อหน่วยงานไหน
+คำถาม: เคสที่ซับซ้อนจะส่งต่อที่ไหน?
+คำตอบ: เคสที่มีความซับซ้อนอาจส่งต่อคลินิกกำลังใจ เพื่อพบผู้เชี่ยวชาญเฉพาะด้าน ในวันเสาร์ที่ 2 และเสาร์ที่ 4 ของทุกเดือน ตามข้อมูลในประกาศ RMUTT
+คำถาม: ถ้าเครียดมาก เศร้า หรือไม่ไหวตอนนี้ควรทำอย่างไร?
+คำตอบ: ให้หยุดอยู่คนเดียวถ้ารู้สึกไม่ปลอดภัย ติดต่อคนที่ไว้ใจ อาจารย์ที่ปรึกษา หรือบริการให้คำปรึกษา RMUTT ทันที หากมีความคิดทำร้ายตัวเองหรือเสี่ยงอันตราย ให้โทร 1323 สายด่วนสุขภาพจิต หรือ 1669/ไปโรงพยาบาลใกล้ที่สุด
+`.trim(),
+  },
+  {
+    title: "AI READY basic psychology self care happiness stress guide",
+    text: `
+AI READY ความรู้จิตวิทยาพื้นฐานสำหรับพี่เทค
+หลักการตอบด้านจิตใจ: รับฟังก่อน แสดงความเข้าใจ สะท้อนความรู้สึก ไม่ตัดสิน ไม่วินิจฉัย ไม่บอกให้คิดบวกแบบง่ายเกินไป และชวนทำขั้นตอนเล็ก ๆ ที่ปลอดภัย เช่น หายใจช้า ๆ ดื่มน้ำ พักจากหน้าจอ เขียนสิ่งที่กังวล หรือคุยกับคนที่ไว้ใจ
+วิธีสร้างสุขให้ตัวเองจากกรมสุขภาพจิต:
+1. ทบทวนสิ่งดี ๆ ที่เกิดขึ้นในแต่ละวัน
+2. มีอารมณ์ขันและยิ้มให้กันอยู่เสมอ
+3. กล่าวคำขอบคุณ ให้เป็นนิสัย และขอโทษเมื่อทำผิด
+4. ตั้งเป้าหมายถึงสิ่งที่จะทำให้ชีวิตมีความสุข
+5. หยุดคิดเล็กคิดน้อย ยอมรับข้อบกพร่องของผู้อื่น
+6. ใส่ใจสุขภาพ ออกกำลังกายอย่างสม่ำเสมอ
+7. ออฟไลน์จากโลกโซเชียล แล้วหันมาพูดคุยหรือทำกิจกรรมต่าง ๆ
+8. ทำงานอดิเรกที่ชอบ หรือลองทำอะไรใหม่ ๆ
+9. ยึดหลักความพอเพียงในการดำเนินชีวิต
+วิธีจัดการความเครียดจากสื่อประชาสัมพันธ์ RMUTT:
+1. ออกกำลังกายคลายเครียด อย่างจริงจังอย่างน้อยวันละ 30 นาที 3-5 วันต่อสัปดาห์
+2. นั่งสมาธิ ฝึกจิต ลดเครียด ทำสมาธิหรือสวดมนต์ไหว้พระ ฝึกลมหายใจ
+3. จัดสรรเวลาในชีวิตประจำวัน ใช้เวลากับครอบครัว และนอนหลับพักผ่อนให้เพียงพอ
+4. ผ่อนคลายด้วยการดูหนัง ฟังเพลง หรือทำกิจกรรมที่ทำให้สดชื่น อดทน อดกลั้น และทำสิ่งที่ตั้งใจ
+5. รับประทานอาหารให้ครบ 5 หมู่ หลีกเลี่ยงอาหารเค็มจัด มันจัด หวานจัด เครื่องดื่มแอลกอฮอล์ บุหรี่ และสารเสพติด
+6. ปรับเปลี่ยนความคิด มองปัญหาให้เข้าใจสถานการณ์ จะช่วยให้หายเครียดได้
+ข้อควรระวัง: บอทให้คำแนะนำเบื้องต้นและชวนดูแลใจได้ แต่ไม่ใช่นักจิตวิทยาหรือแพทย์ หากผู้ใช้มีอาการหนัก ต่อเนื่อง หรือเสี่ยงอันตราย ต้องแนะนำให้ติดต่อผู้เชี่ยวชาญทันที
+`.trim(),
+  },
+];
+
+await loadEnv();
+
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env.local");
+}
+
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
+  auth: { autoRefreshToken: false, persistSession: false },
+});
+
+const existing = await supabase.from("knowledge_documents").select("id").like("title", "AI READY MIND%");
+if (existing.error) throw existing.error;
+
+const existingIds = (existing.data ?? []).map((item) => item.id);
+if (existingIds.length) {
+  const chunkDelete = await supabase.from("knowledge_chunks").delete().in("document_id", existingIds);
+  if (chunkDelete.error) throw chunkDelete.error;
+  const docDelete = await supabase.from("knowledge_documents").delete().in("id", existingIds);
+  if (docDelete.error) throw docDelete.error;
+}
+
+const rows = docs.map((doc) => ({
+  title: doc.title,
+  source_type: "text",
+  mime_type: "text/plain",
+  file_path: null,
+  file_size: Buffer.byteLength(doc.text, "utf8"),
+  extracted_text: doc.text,
+  notes: "AI-ready mental health and counseling knowledge from RMUTT/DMH provided images.",
+  expires_at: null,
+}));
+
+const inserted = await supabase.from("knowledge_documents").insert(rows).select("id,title,extracted_text");
+if (inserted.error) throw inserted.error;
+
+const chunks = inserted.data.map((doc) => ({
+  document_id: doc.id,
+  chunk_index: 0,
+  content: `${doc.title}\n\n${doc.extracted_text}`,
+}));
+const chunkInsert = await supabase.from("knowledge_chunks").insert(chunks);
+if (chunkInsert.error) throw chunkInsert.error;
+
+await mkdir(outputDir, { recursive: true });
+await writeFile(path.join(outputDir, "mind_counseling_ai_ready.json"), JSON.stringify(docs, null, 2), "utf8");
+await writeFile(path.join(outputDir, "mind_counseling_ai_ready.txt"), docs.map((doc) => `# ${doc.title}\n${doc.text}`).join("\n\n---\n\n"), "utf8");
+
+console.log(
+  JSON.stringify(
+    {
+      deletedExisting: existingIds.length,
+      insertedDocuments: inserted.data.length,
+      insertedChunks: chunks.length,
+      outputJson: path.join(outputDir, "mind_counseling_ai_ready.json"),
+      outputText: path.join(outputDir, "mind_counseling_ai_ready.txt"),
+    },
+    null,
+    2,
+  ),
+);
