@@ -9,7 +9,7 @@ const BASIC_KNOWLEDGE = `
 สุขภาพใจฉุกเฉิน: ถ้าผู้ใช้เสี่ยงทำร้ายตัวเองหรือไม่ปลอดภัย ให้แนะนำให้ติดต่อคนใกล้ตัวทันที โทร 1323 สายด่วนสุขภาพจิต หรือ 1669/โรงพยาบาลใกล้ที่สุด.
 `;
 
-const GEMINI_MODELS = [
+export const GEMINI_MODELS = [
   "gemini-3.1-flash-lite",
   "gemini-2.5-flash-lite",
   "gemini-3-flash",
@@ -17,7 +17,7 @@ const GEMINI_MODELS = [
   "gemini-2.5-flash-tts",
 ];
 
-const GROQ_MODELS = [
+export const GROQ_MODELS = [
   "groq/compound",
   "openai/gpt-oss-120b",
   "llama-3.3-70b-versatile",
@@ -30,6 +30,14 @@ const GROQ_MODELS = [
   "openai/gpt-oss-120b",
   "openai/gpt-oss-20b",
   "openai/gpt-oss-safeguard-20b",
+];
+
+export const DEEPSEEK_MODELS = ["deepseek-v4-flash"];
+
+export const AI_MODEL_SEQUENCE = [
+  ...GEMINI_MODELS.map((model, index) => ({ provider: "gemini" as const, model, rank: index + 1 })),
+  ...GROQ_MODELS.map((model, index) => ({ provider: "groq" as const, model, rank: index + 1 })),
+  ...DEEPSEEK_MODELS.map((model, index) => ({ provider: "deepseek" as const, model, rank: index + 1 })),
 ];
 
 function configuredList(value: string | undefined, fallback: string[]) {

@@ -1,5 +1,6 @@
 ﻿import { NextResponse } from "next/server";
 import { askModel } from "@/lib/llm";
+import { recordAiUsage } from "@/lib/ai-usage";
 import { getAppSettings } from "@/lib/app-settings";
 import { getStudyPlanChunks, searchKnowledge } from "@/lib/knowledge";
 import type { ChatMessage, KnowledgeChunk, ResponseLanguage } from "@/lib/types";
@@ -151,6 +152,7 @@ function chatResponse(
     sources: Array<{ id: string; title: string; type: string }>;
   },
 ) {
+  void recordAiUsage(body.provider).catch(() => null);
   const cooldownLockedUntil = recordDeepSeekUse(request, clientId, cooldownEnabled, cooldownLimit, body.provider);
   return NextResponse.json({
     ...body,

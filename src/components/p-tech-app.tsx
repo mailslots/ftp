@@ -24,6 +24,8 @@ type NineQAssessment = {
 };
 type NineQMonthlySummary = { month: string; total: number; mild: number; moderate: number; severe: number; q9Risk: number };
 type ProviderMode = "gemini" | "groq" | "deepseek";
+type AiUsagePeriod = "day" | "month" | "year" | "all";
+type AiUsageRow = { id: string; order: number; provider: ProviderMode; model: string; count: number; used: boolean };
 
 const documentCategories: { value: DocumentCategory; label: string }[] = [
   { value: "branch", label: "ฐานข้อมูลสาขา" },
@@ -242,6 +244,10 @@ export function PTechApp() {
   const [savingSettings, setSavingSettings] = useState(false);
   const [providerMode, setProviderMode] = useState<ProviderMode>("gemini");
   const [providerRank, setProviderRank] = useState<number | null>(null);
+  const [showAiUsage, setShowAiUsage] = useState(false);
+  const [aiUsagePeriod, setAiUsagePeriod] = useState<AiUsagePeriod>("day");
+  const [aiUsageRows, setAiUsageRows] = useState<AiUsageRow[]>([]);
+  const [loadingAiUsage, setLoadingAiUsage] = useState(false);
   const [deviceId] = useState(() => getDeviceId());
   const [responseLanguage, setResponseLanguage] = useState<ResponseLanguage>(() => getStoredLanguage());
   const [spamLockedUntil, setSpamLockedUntil] = useState(() => (typeof window === "undefined" ? 0 : Number(localStorage.getItem(spamLockKey) || 0)));
@@ -319,6 +325,27 @@ export function PTechApp() {
     } finally {
       setSavingSettings(false);
     }
+  }
+
+  async function loadAiUsage(period: AiUsagePeriod = aiUsagePeriod) {
+    setLoadingAiUsage(true);
+    setAdminError("");
+    try {
+      const response = await fetch(`/api/admin/ai-usage?period=${period}`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Load AI usage failed");
+      setAiUsageRows(data.models ?? []);
+      setAiUsagePeriod(data.period ?? period);
+    } catch (error) {
+      setAdminError(error instanceof Error ? error.message : "Load AI usage failed");
+    } finally {
+      setLoadingAiUsage(false);
+    }
+  }
+
+  function openAiUsage() {
+    setShowAiUsage(true);
+    void loadAiUsage("day");
   }
 
   async function submitChat(event?: FormEvent, preset?: string) {
@@ -679,6 +706,13 @@ export function PTechApp() {
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
+                    onClick={openAiUsage}
+                    className="inline-flex min-w-[112px] items-center justify-center rounded-md border border-[#0d1b2e]/15 bg-white px-4 py-2.5 text-sm font-semibold text-[#0d1b2e] transition hover:bg-[#eef3f8]"
+                  >
+                    ลำดับ AI
+                  </button>
+                  <button
+                    type="button"
                     disabled={savingSettings}
                     onClick={() => updateAppSettings({ ...appSettings, groqEnabled: !appSettings.groqEnabled })}
                     className={`inline-flex min-w-[112px] items-center justify-center rounded-md px-4 py-2.5 text-sm font-semibold transition disabled:opacity-50 ${
@@ -957,6 +991,78 @@ export function PTechApp() {
                 </button>
                 {adminError && <div className="rounded-md bg-red-50 p-3 text-sm leading-6 text-red-700">{adminError}</div>}
               </form>
+            </section>
+          </div>
+        )}
+        {adminEmail && showAiUsage && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0d1b2e]/45 p-4 backdrop-blur-sm">
+            <section className="max-h-[92vh] w-full max-w-[860px] overflow-hidden rounded-lg border border-white/70 bg-white shadow-[0_24px_80px_rgba(13,27,46,0.24)]">
+              <div className="flex items-center justify-between gap-3 border-b border-[#0d1b2e]/10 px-5 py-4">
+                <div>
+                  <h2 className="font-semibold">ลำดับ AI และจำนวนครั้งที่ถูกใช้</h2>
+                  <p className="text-sm text-[#42526a]">ค่าเริ่มต้นเป็น By day และ counter จะเพิ่มเมื่อระบบเรียกโมเดลสำรองจริง</p>
+                </div>
+                <button onClick={() => setShowAiUsage(false)} className="rounded-md border border-[#0d1b2e]/10 p-2 text-[#42526a] hover:bg-[#eef3f8]" aria-label="ปิด">
+                  <X size={16} />
+                </button>
+              </div>
+              <div className="space-y-4 p-5">
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { value: "day", label: "By day" },
+                    { value: "month", label: "By month" },
+                    { value: "year", label: "By year" },
+                    { value: "all", label: "All the time" },
+                  ].map((period) => (
+                    <button
+                      key={period.value}
+                      onClick={() => loadAiUsage(period.value as AiUsagePeriod)}
+                      className={`rounded-md px-3 py-2 text-sm font-semibold ${
+                        aiUsagePeriod === period.value ? "bg-[#0d1b2e] text-white" : "border border-[#0d1b2e]/10 bg-white text-[#0d1b2e] hover:bg-[#eef3f8]"
+                      }`}
+                    >
+                      {period.label}
+                    </button>
+                  ))}
+                  <button onClick={() => loadAiUsage()} className="rounded-md border border-[#0d1b2e]/10 bg-white px-3 py-2 text-sm font-semibold text-[#42526a] hover:bg-[#eef3f8]">
+                    Refresh
+                  </button>
+                </div>
+                <div className="max-h-[60vh] overflow-auto rounded-lg border border-[#0d1b2e]/10">
+                  <table className="w-full min-w-[680px] border-collapse text-sm">
+                    <thead className="sticky top-0 bg-white text-left text-xs uppercase text-[#42526a]">
+                      <tr>
+                        <th className="border-b border-[#0d1b2e]/10 px-4 py-3">ลำดับ</th>
+                        <th className="border-b border-[#0d1b2e]/10 px-4 py-3">Provider</th>
+                        <th className="border-b border-[#0d1b2e]/10 px-4 py-3">Model</th>
+                        <th className="border-b border-[#0d1b2e]/10 px-4 py-3">ใช้แล้ว</th>
+                        <th className="border-b border-[#0d1b2e]/10 px-4 py-3 text-right">Counter</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {loadingAiUsage ? (
+                        <tr><td colSpan={5} className="px-4 py-8 text-center text-[#42526a]">กำลังโหลด</td></tr>
+                      ) : (
+                        aiUsageRows.map((row) => (
+                          <tr key={row.id} className="border-b border-[#eef1ec] last:border-b-0">
+                            <td className="px-4 py-3 font-semibold text-[#0d1b2e]">{row.order}</td>
+                            <td className="px-4 py-3">
+                              <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                                row.provider === "gemini" ? "bg-emerald-50 text-emerald-700" : row.provider === "groq" ? "bg-red-50 text-red-700" : "bg-purple-50 text-purple-700"
+                              }`}>
+                                {row.provider}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-[#42526a]">{row.model}</td>
+                            <td className="px-4 py-3 text-[#42526a]">{row.used ? "ใช้แล้ว" : "-"}</td>
+                            <td className="px-4 py-3 text-right font-semibold text-[#0d1b2e]">{row.count}</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </section>
           </div>
         )}

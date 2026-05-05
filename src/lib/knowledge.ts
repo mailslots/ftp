@@ -1,4 +1,5 @@
 import { KNOWLEDGE_BUCKET, getSupabaseAdmin } from "@/lib/supabase";
+import { AI_USAGE_DOCUMENT_TITLE } from "@/lib/ai-usage";
 import { SETTINGS_DOCUMENT_TITLE } from "@/lib/app-settings";
 import type { KnowledgeChunk, KnowledgeDocument } from "@/lib/types";
 
@@ -64,6 +65,7 @@ export async function listDocuments() {
     .select("*")
     .is("deleted_at", null)
     .neq("title", SETTINGS_DOCUMENT_TITLE)
+    .neq("title", AI_USAGE_DOCUMENT_TITLE)
     .order("expires_at", { ascending: true, nullsFirst: false })
     .order("created_at", { ascending: false });
 
@@ -273,6 +275,7 @@ export async function searchKnowledge(query: string) {
     .select("*, knowledge_documents!inner(id,title,source_type,expires_at)")
     .is("knowledge_documents.deleted_at", null)
     .neq("knowledge_documents.title", SETTINGS_DOCUMENT_TITLE)
+    .neq("knowledge_documents.title", AI_USAGE_DOCUMENT_TITLE)
     .order("created_at", { ascending: false })
     .limit(300);
 
@@ -397,6 +400,7 @@ export async function getStudyPlanChunks(year: string, term: string) {
     .select("*, knowledge_documents!inner(id,title,source_type,expires_at)")
     .is("knowledge_documents.deleted_at", null)
     .neq("knowledge_documents.title", SETTINGS_DOCUMENT_TITLE)
+    .neq("knowledge_documents.title", AI_USAGE_DOCUMENT_TITLE)
     .like("knowledge_documents.title", `%year ${year}%`)
     .like("knowledge_documents.title", "FTP study plan%")
     .order("created_at", { ascending: true })
