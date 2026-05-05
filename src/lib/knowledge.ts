@@ -327,6 +327,16 @@ export async function searchKnowledge(query: string) {
     "ชำระเงิน",
     "วันหยุด",
     "สงกรานต์",
+    "เงินรางวัล",
+    "คืนเงินค่าสอบ",
+    "ค่าสอบวัดระดับภาษา",
+    "วัดระดับภาษา",
+    "toeic",
+    "ielts",
+    "toefl",
+    "jlpt",
+    "hsk",
+    "hskk",
   ];
   for (const keyword of faqKeywords) {
     if (normalizedQuery.includes(keyword)) terms.push(keyword);

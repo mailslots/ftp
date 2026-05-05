@@ -36,7 +36,7 @@ const documentsPerPage = 10;
 
 const faqItems: FaqItem[] = [
   { label: "ปี 1 เทอม 1 เรียนอะไร?", action: "chat" },
-  { label: "ปี 1 เทอม 2 เรียนอะไร?", action: "chat" },
+  { label: "ขอเงินรางวัล/คืนเงินค่าสอบภาษา", action: "chat", prompt: "การขอรับเงินรางวัลและการคืนเงินค่าสอบวัดระดับภาษา ทำอย่างไร?" },
   { label: "ประกันอุบัติเหตุคุ้มครองอะไรบ้าง?", action: "chat" },
   { label: "คลินิกกำลังใจติดต่อได้ที่ไหน?", action: "chat" },
   { label: "แบบประเมินโรคซึมเศร้า 9Q", action: "assessment" },
