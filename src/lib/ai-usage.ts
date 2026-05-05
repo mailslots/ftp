@@ -1,5 +1,6 @@
-import { AI_MODEL_SEQUENCE } from "@/lib/llm";
+import { getAiModelSequence } from "@/lib/llm";
 import { getSupabaseAdmin } from "@/lib/supabase";
+import type { AppSettings } from "@/lib/types";
 
 export const AI_USAGE_DOCUMENT_TITLE = "__ptech_ai_usage__";
 
@@ -36,7 +37,7 @@ function modelKeyFromProvider(provider: string) {
     return provider.replace(/^groq:/i, "").replace(/:rank-\d+.*/i, "");
   }
   if (/deepseek/i.test(provider)) return "deepseek-v4-flash";
-  return provider.replace(/-after-.*/i, "").replace(/-fallback-.*/i, "").replace(/-empty.*/i, "");
+  return provider.replace(/-order-\d+.*/i, "").replace(/-after-.*/i, "").replace(/-fallback-.*/i, "").replace(/-empty.*/i, "");
 }
 
 function totalForPeriod(store: UsageStore, period: AiUsagePeriod, model: string) {
@@ -108,15 +109,19 @@ export async function recordAiUsage(provider: string) {
   await writeUsageStore(store, existing?.id);
 }
 
-export async function getAiUsage(period: AiUsagePeriod) {
+export async function getAiUsage(period: AiUsagePeriod, settings: Pick<AppSettings, "groqEnabled">) {
   const existing = await readUsageDocument();
   const store = parseStore(existing?.extracted_text);
-  return AI_MODEL_SEQUENCE.map((item, index) => ({
+  const models = getAiModelSequence(settings).map((item) => ({
     id: `${item.provider}:${item.model}`,
-    order: index + 1,
+    order: item.order,
     provider: item.provider,
     model: item.model,
     count: totalForPeriod(store, period, item.model),
     used: totalForPeriod(store, period, item.model) > 0,
   }));
+  return {
+    models,
+    total: models.reduce((sum, item) => sum + item.count, 0),
+  };
 }

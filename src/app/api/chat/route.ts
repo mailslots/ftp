@@ -931,12 +931,17 @@ export async function POST(request: Request) {
     let cooldownEnabled = false;
     let cooldownLimit = 1;
     let groqEnabled = false;
+    let aiForceEnabled = false;
+    let aiForceStartOrder: number | null = null;
     try {
       const settings = await getAppSettings();
       cooldownEnabled = settings.deepseekCooldownEnabled;
       cooldownLimit = settings.deepseekCooldownLimit;
       groqEnabled = settings.groqEnabled;
+      aiForceEnabled = settings.aiForceEnabled;
+      aiForceStartOrder = settings.aiForceStartOrder;
     } catch {}
+    const aiRouting = { groqEnabled, aiForceEnabled, aiForceStartOrder };
 
     const deepseekCooldownCheck = checkDeepSeekCooldown(request, clientKey, cooldownEnabled);
     if (deepseekCooldownCheck.blocked) {
@@ -1050,7 +1055,7 @@ export async function POST(request: Request) {
       }
       const directRetireAnswer = retireCheckAnswer || answerAiReadyQuestion("รีไทร์ พ้นสภาพ เกรดเฉลี่ย GPA หน่วยกิต", chunks);
       if (!directRetireAnswer) {
-        const result = await askModel({ messages: cleanMessages, chunks, language, groqEnabled });
+        const result = await askModel({ messages: cleanMessages, chunks, language, ...aiRouting });
         return chatResponse(request, clientKey, cooldownEnabled, cooldownLimit, {
           answer: presentAnswer(result.answer, language),
           provider: result.provider,
@@ -1097,7 +1102,7 @@ export async function POST(request: Request) {
         });
       }
 
-      const result = await askModel({ messages: cleanMessages, chunks: scopedChunks, language, groqEnabled });
+      const result = await askModel({ messages: cleanMessages, chunks: scopedChunks, language, ...aiRouting });
       return chatResponse(request, clientKey, cooldownEnabled, cooldownLimit, {
         answer: presentAnswer(result.answer, language),
         provider: result.provider,
@@ -1126,7 +1131,7 @@ export async function POST(request: Request) {
         });
       }
 
-      const result = await askModel({ messages: cleanMessages, chunks, language, groqEnabled });
+      const result = await askModel({ messages: cleanMessages, chunks, language, ...aiRouting });
       return chatResponse(request, clientKey, cooldownEnabled, cooldownLimit, {
         answer: presentAnswer(result.answer, language),
         provider: result.provider,
@@ -1187,7 +1192,7 @@ export async function POST(request: Request) {
     }
 
     const modelChunks = isKnowledgeIntent(knowledgeQuery) ? chunks : [];
-    const result = await askModel({ messages: cleanMessages, chunks: modelChunks, language, groqEnabled });
+    const result = await askModel({ messages: cleanMessages, chunks: modelChunks, language, ...aiRouting });
     return chatResponse(request, clientKey, cooldownEnabled, cooldownLimit, {
       answer: presentAnswer(result.answer, language),
       provider: result.provider,

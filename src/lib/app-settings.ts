@@ -7,16 +7,21 @@ const DEFAULT_SETTINGS: AppSettings = {
   deepseekCooldownEnabled: false,
   deepseekCooldownLimit: 1,
   groqEnabled: false,
+  aiForceEnabled: false,
+  aiForceStartOrder: null,
 };
 
 function normalizeSettings(value: unknown): AppSettings {
   if (!value || typeof value !== "object") return DEFAULT_SETTINGS;
   const settings = value as Partial<AppSettings>;
   const cooldownLimit = Number(settings.deepseekCooldownLimit);
+  const forceStartOrder = settings.aiForceStartOrder === null || settings.aiForceStartOrder === undefined ? null : Number(settings.aiForceStartOrder);
   return {
     deepseekCooldownEnabled: Boolean(settings.deepseekCooldownEnabled),
     deepseekCooldownLimit: Number.isFinite(cooldownLimit) ? Math.min(20, Math.max(1, Math.round(cooldownLimit))) : DEFAULT_SETTINGS.deepseekCooldownLimit,
     groqEnabled: Boolean(settings.groqEnabled),
+    aiForceEnabled: Boolean(settings.aiForceEnabled),
+    aiForceStartOrder: typeof forceStartOrder === "number" && Number.isFinite(forceStartOrder) ? Math.min(30, Math.max(1, Math.round(forceStartOrder))) : DEFAULT_SETTINGS.aiForceStartOrder,
   };
 }
 

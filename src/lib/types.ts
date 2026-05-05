@@ -34,4 +34,6 @@ export type AppSettings = {
   deepseekCooldownEnabled: boolean;
   deepseekCooldownLimit: number;
   groqEnabled: boolean;
+  aiForceEnabled: boolean;
+  aiForceStartOrder: number | null;
 };

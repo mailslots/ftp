@@ -21,11 +21,15 @@ export async function PUT(request: Request) {
       deepseekCooldownEnabled?: unknown;
       deepseekCooldownLimit?: unknown;
       groqEnabled?: unknown;
+      aiForceEnabled?: unknown;
+      aiForceStartOrder?: unknown;
     };
     const settings = await updateAppSettings({
       deepseekCooldownEnabled: Boolean(body.deepseekCooldownEnabled),
       deepseekCooldownLimit: Number(body.deepseekCooldownLimit),
       groqEnabled: Boolean(body.groqEnabled),
+      aiForceEnabled: Boolean(body.aiForceEnabled),
+      aiForceStartOrder: body.aiForceStartOrder === null ? null : Number(body.aiForceStartOrder),
     });
     return NextResponse.json({ settings });
   } catch (error) {

@@ -34,11 +34,41 @@ export const GROQ_MODELS = [
 
 export const DEEPSEEK_MODELS = ["deepseek-v4-flash"];
 
-export const AI_MODEL_SEQUENCE = [
-  ...GEMINI_MODELS.map((model, index) => ({ provider: "gemini" as const, model, rank: index + 1 })),
-  ...GROQ_MODELS.map((model, index) => ({ provider: "groq" as const, model, rank: index + 1 })),
-  ...DEEPSEEK_MODELS.map((model, index) => ({ provider: "deepseek" as const, model, rank: index + 1 })),
-];
+export type AiProvider = "gemini" | "groq" | "deepseek";
+
+export type AiModelEntry = {
+  provider: AiProvider;
+  model: string;
+  rank: number;
+  order: number;
+};
+
+export type AiRoutingSettings = {
+  groqEnabled?: boolean;
+  aiForceEnabled?: boolean;
+  aiForceStartOrder?: number | null;
+};
+
+function sequenceItems(provider: AiProvider, models: string[]) {
+  return models.map((model, index) => ({ provider, model, rank: index + 1 }));
+}
+
+export function getAiModelSequence(settings: AiRoutingSettings = {}): AiModelEntry[] {
+  const gemini = sequenceItems("gemini", GEMINI_MODELS);
+  const groq = sequenceItems("groq", GROQ_MODELS);
+  const deepseek = sequenceItems("deepseek", DEEPSEEK_MODELS);
+  const base = settings.groqEnabled ? [...groq, ...gemini, ...deepseek] : [...gemini, ...deepseek];
+  return base.map((item, index) => ({ ...item, order: index + 1 }));
+}
+
+export function getRuntimeAiModelSequence(settings: AiRoutingSettings = {}) {
+  const sequence = getAiModelSequence(settings);
+  if (!settings.aiForceEnabled || !settings.aiForceStartOrder) return sequence;
+  const startIndex = Math.min(sequence.length - 1, Math.max(0, settings.aiForceStartOrder - 1));
+  return sequence.slice(startIndex);
+}
+
+export const AI_MODEL_SEQUENCE = getAiModelSequence({ groqEnabled: true });
 
 function configuredList(value: string | undefined, fallback: string[]) {
   const models = value
@@ -267,6 +297,8 @@ export async function askModel(input: {
   chunks: KnowledgeChunk[];
   language?: ResponseLanguage;
   groqEnabled?: boolean;
+  aiForceEnabled?: boolean;
+  aiForceStartOrder?: number | null;
 }) {
   const context = input.chunks
     .map((chunk, index) => {
@@ -281,7 +313,7 @@ export async function askModel(input: {
   const groqModels = configuredList(process.env.GROQ_MODELS, GROQ_MODELS);
   const groqApiBase = process.env.GROQ_API_BASE || "https://api.groq.com/openai/v1";
   const deepseekApiKey = process.env.DEEPSEEK_API_KEY;
-  const deepseekModel = process.env.DEEPSEEK_MODEL || "deepseek-v4-flash";
+  const deepseekModels = configuredList(process.env.DEEPSEEK_MODELS || process.env.DEEPSEEK_MODEL, DEEPSEEK_MODELS);
   const deepseekApiBase = process.env.DEEPSEEK_API_BASE || "https://api.deepseek.com";
   const lastMessage = input.messages.at(-1)?.content || "";
   const enrichedMessages = /ซื้อ|รุ่นไหนดี|กล้อง.*ไหนดี|แนะนำ.*กล้อง/i.test(lastMessage)
@@ -296,8 +328,18 @@ export async function askModel(input: {
 
   const language = input.language ?? "th";
   const systemPrompt = buildSystemPrompt(context, input.chunks.length > 0, language);
+  const runtimeSequence = getRuntimeAiModelSequence(input).map((entry) => {
+    if (entry.provider === "gemini") return { ...entry, model: geminiModels[entry.rank - 1] || entry.model };
+    if (entry.provider === "groq") return { ...entry, model: groqModels[entry.rank - 1] || entry.model };
+    return { ...entry, model: deepseekModels[entry.rank - 1] || entry.model };
+  });
+  const hasConfiguredProvider = runtimeSequence.some((entry) => {
+    if (entry.provider === "gemini") return hasUsableKey(geminiApiKey);
+    if (entry.provider === "groq") return hasUsableKey(groqApiKey);
+    return hasUsableKey(deepseekApiKey);
+  });
 
-  if (!hasUsableKey(geminiApiKey)) {
+  if (!hasConfiguredProvider) {
     return {
       answer: fallbackAnswer(lastMessage, input.chunks, language),
       provider: "local-fallback",
@@ -305,32 +347,29 @@ export async function askModel(input: {
   }
 
   try {
-    let lastGemini:
-      | Awaited<ReturnType<typeof callGemini>>
-      | { ok: false; status: number; detail: string } = { ok: false, status: 500, detail: "gemini not called" };
+    let lastFailure: { ok: false; status: number; detail: string } = { ok: false, status: 500, detail: "model not called" };
 
-    for (const model of geminiModels) {
-      const gemini = await callGemini({
-        apiKey: geminiApiKey,
-        model,
-        systemPrompt,
-        messages: enrichedMessages,
-      });
-      lastGemini = gemini;
-
-      if (gemini.ok && gemini.answer) {
-        return {
-          answer: gemini.answer,
-          provider: gemini.provider,
-        };
+    for (const entry of runtimeSequence) {
+      if (entry.provider === "gemini" && hasUsableKey(geminiApiKey)) {
+        const gemini = await callGemini({
+          apiKey: geminiApiKey,
+          model: entry.model,
+          systemPrompt,
+          messages: enrichedMessages,
+        });
+        if (gemini.ok && gemini.answer) {
+          return {
+            answer: gemini.answer,
+            provider: `${gemini.provider}-order-${entry.order}`,
+          };
+        }
+        if (!gemini.ok) lastFailure = gemini;
       }
-    }
 
-    if (input.groqEnabled && hasUsableKey(groqApiKey)) {
-      for (let index = 0; index < groqModels.length; index += 1) {
+      if (entry.provider === "groq" && hasUsableKey(groqApiKey)) {
         const groq = await callGroq({
           apiKey: groqApiKey,
-          model: groqModels[index],
+          model: entry.model,
           apiBase: groqApiBase,
           systemPrompt,
           messages: enrichedMessages,
@@ -339,84 +378,36 @@ export async function askModel(input: {
         if (groq.ok && groq.answer) {
           return {
             answer: groq.answer,
-            provider: `${groq.provider}:rank-${index + 1}-after-gemini-limit`,
+            provider: `${groq.provider}:rank-${entry.rank}:order-${entry.order}`,
           };
         }
-      }
-    }
-
-    if (
-      deepseekApiKey &&
-      hasUsableKey(deepseekApiKey)
-    ) {
-      const deepseek = await callDeepSeek({
-        apiKey: deepseekApiKey,
-        model: deepseekModel,
-        apiBase: deepseekApiBase,
-        systemPrompt,
-        messages: enrichedMessages,
-      });
-
-      if (deepseek.ok && deepseek.answer) {
-        return {
-          answer: deepseek.answer,
-          provider: `${deepseek.provider}-after-gemini-limit`,
-        };
+        if (!groq.ok) lastFailure = groq;
       }
 
-      return {
-        answer: fallbackAnswer(lastMessage, input.chunks, language),
-        provider: deepseek.ok ? "deepseek-empty-fallback" : `deepseek-fallback-${deepseek.status}`,
-        detail: deepseek.ok ? "" : deepseek.detail.slice(0, 300),
-      };
-    }
-
-    return {
-      answer: fallbackAnswer(lastMessage, input.chunks, language),
-      provider: lastGemini.ok ? "gemini-empty-fallback" : `gemini-fallback-${lastGemini.status}`,
-      detail: lastGemini.ok ? "" : lastGemini.detail.slice(0, 300),
-    };
-  } catch (error) {
-    if (input.groqEnabled && hasUsableKey(groqApiKey)) {
-      for (let index = 0; index < groqModels.length; index += 1) {
-        try {
-          const groq = await callGroq({
-            apiKey: groqApiKey,
-            model: groqModels[index],
-            apiBase: groqApiBase,
-            systemPrompt,
-            messages: enrichedMessages,
-          });
-
-          if (groq.ok && groq.answer) {
-            return {
-              answer: groq.answer,
-              provider: `${groq.provider}:rank-${index + 1}-after-gemini-error`,
-            };
-          }
-        } catch {}
-      }
-    }
-
-    if (hasUsableKey(deepseekApiKey)) {
-      try {
+      if (entry.provider === "deepseek" && hasUsableKey(deepseekApiKey)) {
         const deepseek = await callDeepSeek({
           apiKey: deepseekApiKey,
-          model: deepseekModel,
+          model: entry.model,
           apiBase: deepseekApiBase,
           systemPrompt,
           messages: enrichedMessages,
         });
-
         if (deepseek.ok && deepseek.answer) {
           return {
             answer: deepseek.answer,
-            provider: `${deepseek.provider}-after-gemini-error`,
+            provider: `${deepseek.provider}-order-${entry.order}`,
           };
         }
-      } catch {}
+        if (!deepseek.ok) lastFailure = deepseek;
+      }
     }
 
+    return {
+      answer: fallbackAnswer(lastMessage, input.chunks, language),
+      provider: `model-fallback-${lastFailure.status}`,
+      detail: lastFailure.detail.slice(0, 300),
+    };
+  } catch (error) {
     return {
       answer: fallbackAnswer(lastMessage, input.chunks, language),
       provider: "model-error-fallback",

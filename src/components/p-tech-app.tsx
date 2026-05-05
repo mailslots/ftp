@@ -240,13 +240,14 @@ export function PTechApp() {
   const [savingNineQContact, setSavingNineQContact] = useState(false);
   const [nineqAssessments, setNineqAssessments] = useState<NineQAssessment[]>([]);
   const [nineqMonthly, setNineqMonthly] = useState<NineQMonthlySummary[]>([]);
-  const [appSettings, setAppSettings] = useState<AppSettings>({ deepseekCooldownEnabled: false, deepseekCooldownLimit: 1, groqEnabled: false });
+  const [appSettings, setAppSettings] = useState<AppSettings>({ deepseekCooldownEnabled: false, deepseekCooldownLimit: 1, groqEnabled: false, aiForceEnabled: false, aiForceStartOrder: null });
   const [savingSettings, setSavingSettings] = useState(false);
   const [providerMode, setProviderMode] = useState<ProviderMode>("gemini");
   const [providerRank, setProviderRank] = useState<number | null>(null);
   const [showAiUsage, setShowAiUsage] = useState(false);
   const [aiUsagePeriod, setAiUsagePeriod] = useState<AiUsagePeriod>("day");
   const [aiUsageRows, setAiUsageRows] = useState<AiUsageRow[]>([]);
+  const [aiUsageTotal, setAiUsageTotal] = useState(0);
   const [loadingAiUsage, setLoadingAiUsage] = useState(false);
   const [deviceId] = useState(() => getDeviceId());
   const [responseLanguage, setResponseLanguage] = useState<ResponseLanguage>(() => getStoredLanguage());
@@ -320,6 +321,7 @@ export function PTechApp() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Save settings failed");
       setAppSettings(data.settings);
+      if (showAiUsage) void loadAiUsage(aiUsagePeriod);
     } catch (error) {
       setAdminError(error instanceof Error ? error.message : "Save settings failed");
     } finally {
@@ -335,6 +337,8 @@ export function PTechApp() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Load AI usage failed");
       setAiUsageRows(data.models ?? []);
+      setAiUsageTotal(Number(data.total || 0));
+      if (data.settings) setAppSettings(data.settings);
       setAiUsagePeriod(data.period ?? period);
     } catch (error) {
       setAdminError(error instanceof Error ? error.message : "Load AI usage failed");
@@ -1000,14 +1004,14 @@ export function PTechApp() {
               <div className="flex items-center justify-between gap-3 border-b border-[#0d1b2e]/10 px-5 py-4">
                 <div>
                   <h2 className="font-semibold">ลำดับ AI และจำนวนครั้งที่ถูกใช้</h2>
-                  <p className="text-sm text-[#42526a]">ค่าเริ่มต้นเป็น By day และ counter จะเพิ่มเมื่อระบบเรียกโมเดลสำรองจริง</p>
+                  <p className="text-sm text-[#42526a]">ค่าเริ่มต้นเป็น By day ถ้าเปิด Groq ระบบจะเรียง Groq ก่อน แล้วค่อย Gemini และ DeepSeek</p>
                 </div>
                 <button onClick={() => setShowAiUsage(false)} className="rounded-md border border-[#0d1b2e]/10 p-2 text-[#42526a] hover:bg-[#eef3f8]" aria-label="ปิด">
                   <X size={16} />
                 </button>
               </div>
               <div className="space-y-4 p-5">
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   {[
                     { value: "day", label: "By day" },
                     { value: "month", label: "By month" },
@@ -1027,21 +1031,37 @@ export function PTechApp() {
                   <button onClick={() => loadAiUsage()} className="rounded-md border border-[#0d1b2e]/10 bg-white px-3 py-2 text-sm font-semibold text-[#42526a] hover:bg-[#eef3f8]">
                     Refresh
                   </button>
+                  <div className="ml-auto rounded-md bg-[#eef3f8] px-3 py-2 text-sm font-semibold text-[#0d1b2e]">
+                    Sum: {aiUsageTotal}
+                  </div>
+                </div>
+                <div className="rounded-md border border-[#0d1b2e]/10 bg-[#f8fafc] px-3 py-2 text-sm leading-6 text-[#42526a]">
+                  Force ใช้สำหรับทดสอบเท่านั้น ถ้าติ๊ก ระบบจะเริ่มลองจากลำดับนั้นลงไป ส่วนค่า Default คือไม่ Force และเริ่มจากลำดับ 1 เสมอ
+                  {appSettings.aiForceEnabled && (
+                    <button
+                      type="button"
+                      onClick={() => updateAppSettings({ ...appSettings, aiForceEnabled: false, aiForceStartOrder: null })}
+                      className="ml-2 rounded-md border border-[#0d1b2e]/10 bg-white px-2 py-1 text-xs font-semibold text-[#0d1b2e] hover:bg-[#eef3f8]"
+                    >
+                      ปิด Force
+                    </button>
+                  )}
                 </div>
                 <div className="max-h-[60vh] overflow-auto rounded-lg border border-[#0d1b2e]/10">
-                  <table className="w-full min-w-[680px] border-collapse text-sm">
+                  <table className="w-full min-w-[760px] border-collapse text-sm">
                     <thead className="sticky top-0 bg-white text-left text-xs uppercase text-[#42526a]">
                       <tr>
                         <th className="border-b border-[#0d1b2e]/10 px-4 py-3">ลำดับ</th>
                         <th className="border-b border-[#0d1b2e]/10 px-4 py-3">Provider</th>
                         <th className="border-b border-[#0d1b2e]/10 px-4 py-3">Model</th>
+                        <th className="border-b border-[#0d1b2e]/10 px-4 py-3">Force</th>
                         <th className="border-b border-[#0d1b2e]/10 px-4 py-3">ใช้แล้ว</th>
                         <th className="border-b border-[#0d1b2e]/10 px-4 py-3 text-right">Counter</th>
                       </tr>
                     </thead>
                     <tbody>
                       {loadingAiUsage ? (
-                        <tr><td colSpan={5} className="px-4 py-8 text-center text-[#42526a]">กำลังโหลด</td></tr>
+                        <tr><td colSpan={6} className="px-4 py-8 text-center text-[#42526a]">กำลังโหลด</td></tr>
                       ) : (
                         aiUsageRows.map((row) => (
                           <tr key={row.id} className="border-b border-[#eef1ec] last:border-b-0">
@@ -1054,6 +1074,21 @@ export function PTechApp() {
                               </span>
                             </td>
                             <td className="px-4 py-3 text-[#42526a]">{row.model}</td>
+                            <td className="px-4 py-3">
+                              <input
+                                type="checkbox"
+                                checked={Boolean(appSettings.aiForceEnabled && appSettings.aiForceStartOrder === row.order)}
+                                onChange={() => {
+                                  const isActive = Boolean(appSettings.aiForceEnabled && appSettings.aiForceStartOrder === row.order);
+                                  void updateAppSettings({
+                                    ...appSettings,
+                                    aiForceEnabled: !isActive,
+                                    aiForceStartOrder: isActive ? null : row.order,
+                                  });
+                                }}
+                                aria-label={`Force start at order ${row.order}`}
+                              />
+                            </td>
                             <td className="px-4 py-3 text-[#42526a]">{row.used ? "ใช้แล้ว" : "-"}</td>
                             <td className="px-4 py-3 text-right font-semibold text-[#0d1b2e]">{row.count}</td>
                           </tr>
