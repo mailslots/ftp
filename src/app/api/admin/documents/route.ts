@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server";
 import { requireAdminSession } from "@/lib/auth";
 import { createKnowledgeDocument, createTextKnowledgeDocument, listDocuments } from "@/lib/knowledge";
+import type { KnowledgeDocument } from "@/lib/types";
 
 export const runtime = "nodejs";
+
+const categories: KnowledgeDocument["category"][] = ["branch", "academic", "student_development", "academic_staff", "other"];
+
+function normalizeCategory(value: FormDataEntryValue | null): KnowledgeDocument["category"] {
+  const category = String(value || "branch") as KnowledgeDocument["category"];
+  return categories.includes(category) ? category : "branch";
+}
 
 export async function GET() {
   try {
@@ -23,6 +31,7 @@ export async function POST(request: Request) {
     const title = String(form.get("title") || "");
     const expiresAt = String(form.get("expiresAt") || "") || null;
     const notes = String(form.get("notes") || "");
+    const category = normalizeCategory(form.get("category"));
 
     const hasFile = file instanceof File && file.size > 0;
     const document = hasFile
@@ -31,12 +40,14 @@ export async function POST(request: Request) {
           title: title || file.name,
           expiresAt,
           notes,
+          category,
         })
       : await createTextKnowledgeDocument({
           title,
           text,
           expiresAt,
           notes,
+          category,
         });
 
     return NextResponse.json({ document });

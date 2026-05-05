@@ -1,12 +1,13 @@
 ﻿"use client";
 
 import Image from "next/image";
-import { CheckSquare, Edit3, FileText, ImageIcon, Loader2, LogIn, LogOut, Save, Send, Trash2, Upload, X } from "lucide-react";
+import { CheckSquare, ChevronLeft, ChevronRight, Edit3, FileText, ImageIcon, Loader2, LogIn, LogOut, Plus, Save, Send, Trash2, Upload, X } from "lucide-react";
 import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { ChatMessage, KnowledgeDocument } from "@/lib/types";
 
 type Source = { id: string; title: string; type: string };
-type EditState = { id: string; title: string; text: string; expiresAt: string; notes: string } | null;
+type DocumentCategory = KnowledgeDocument["category"];
+type EditState = { id: string; title: string; text: string; expiresAt: string; notes: string; category: DocumentCategory } | null;
 type FaqItem = { label: string; action: "chat" | "assessment" | "link"; prompt?: string; href?: string };
 type NineQAssessment = {
   id: string;
@@ -22,6 +23,16 @@ type NineQAssessment = {
   created_at: string;
 };
 type NineQMonthlySummary = { month: string; total: number; mild: number; moderate: number; severe: number; q9Risk: number };
+
+const documentCategories: { value: DocumentCategory; label: string }[] = [
+  { value: "branch", label: "ฐานข้อมูลสาขา" },
+  { value: "academic", label: "ฝ่ายวิชาการ" },
+  { value: "student_development", label: "ฝ่ายพัฒนานักศึกษา" },
+  { value: "academic_staff", label: "ฝ่ายนักวิชาการ" },
+  { value: "other", label: "อื่นๆ" },
+];
+
+const documentsPerPage = 10;
 
 const faqItems: FaqItem[] = [
   { label: "ปี 1 เทอม 1 เรียนอะไร?", action: "chat" },
@@ -75,6 +86,19 @@ function sourceLabel(type: KnowledgeDocument["source_type"]) {
   if (type === "doc") return "DOC";
   if (type === "image") return "รูปภาพ";
   return "ข้อความ";
+}
+
+function categoryLabel(category: DocumentCategory) {
+  return documentCategories.find((item) => item.value === category)?.label ?? "ฐานข้อมูลสาขา";
+}
+
+function sortDocumentsByExpiry(documents: KnowledgeDocument[]) {
+  return [...documents].sort((a, b) => {
+    const aTime = a.expires_at ? new Date(a.expires_at).getTime() : Number.POSITIVE_INFINITY;
+    const bTime = b.expires_at ? new Date(b.expires_at).getTime() : Number.POSITIVE_INFINITY;
+    if (aTime !== bTime) return aTime - bTime;
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
 }
 
 function toDateTimeLocal(value: string | null) {
@@ -163,6 +187,9 @@ export function PTechApp() {
   const [documents, setDocuments] = useState<KnowledgeDocument[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editing, setEditing] = useState<EditState>(null);
+  const [showDocumentModal, setShowDocumentModal] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<DocumentCategory>("branch");
+  const [documentPage, setDocumentPage] = useState(1);
   const [adminError, setAdminError] = useState("");
   const [saving, setSaving] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -179,10 +206,15 @@ export function PTechApp() {
   const [nowMs, setNowMs] = useState(() => Date.now());
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
-  const activeDocuments = useMemo(
-    () => documents.filter((document) => !document.expires_at || new Date(document.expires_at) > new Date()),
-    [documents],
+  const activeDocuments = useMemo(() => documents.filter((document) => !document.expires_at || new Date(document.expires_at) > new Date()), [documents]);
+  const visibleDocuments = useMemo(
+    () => sortDocumentsByExpiry(activeDocuments.filter((document) => document.category === activeCategory)),
+    [activeDocuments, activeCategory],
   );
+  const totalDocumentPages = Math.max(1, Math.ceil(visibleDocuments.length / documentsPerPage));
+  const currentDocumentPage = Math.min(documentPage, totalDocumentPages);
+  const pagedDocuments = visibleDocuments.slice((currentDocumentPage - 1) * documentsPerPage, currentDocumentPage * documentsPerPage);
+  const selectedVisibleIds = selectedIds.filter((id) => visibleDocuments.some((document) => document.id === id));
   const isSpamLocked = spamLockedUntil > nowMs;
   const lockRemainingText = isSpamLocked ? formatLockRemaining(spamLockedUntil, nowMs) : "";
 
@@ -305,6 +337,7 @@ export function PTechApp() {
     setNineqMonthly([]);
     setSelectedIds([]);
     setEditing(null);
+    setShowDocumentModal(false);
     setShowLogin(false);
   }
 
@@ -317,6 +350,7 @@ export function PTechApp() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Save failed");
       event.currentTarget.reset();
+      setShowDocumentModal(false);
       setRefreshKey((key) => key + 1);
     } catch (error) {
       setAdminError(error instanceof Error ? error.message : "Save failed");
@@ -340,11 +374,13 @@ export function PTechApp() {
           text: form.get("text"),
           expiresAt: String(form.get("expiresAt") || "") || null,
           notes: form.get("notes"),
+          category: form.get("category"),
         }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Update failed");
       setEditing(null);
+      setShowDocumentModal(false);
       setRefreshKey((key) => key + 1);
     } catch (error) {
       setAdminError(error instanceof Error ? error.message : "Update failed");
@@ -529,8 +565,8 @@ export function PTechApp() {
         </section>
 
         {adminEmail && (
-          <section className="grid gap-4 pb-4 lg:grid-cols-[minmax(0,1fr)_360px]">
-            <section className="rounded-lg border border-[#0d1b2e]/10 bg-white p-5 lg:col-span-2">
+          <section className="space-y-4 pb-4">
+            <section className="rounded-lg border border-[#0d1b2e]/10 bg-white p-5">
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-semibold">สรุป 9Q ที่มีแนวโน้มควรดูแล</h2>
@@ -588,37 +624,70 @@ export function PTechApp() {
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#0d1b2e]/10 px-5 py-4">
                 <div>
                   <h2 className="text-lg font-semibold">ฐานข้อมูลเจ้าหน้าที่</h2>
-                  <p className="text-sm text-[#42526a]">เลือกหลายรายการเพื่อลบ หรือแก้ไขข้อมูลข้อความได้</p>
+                  <p className="text-sm text-[#42526a]">แสดง 10 รายการต่อหน้า และเรียงข้อมูลที่ใกล้หมดอายุก่อน</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="rounded-md bg-[#eef3f8] px-3 py-2 text-sm font-medium text-[#0d1b2e]">{activeDocuments.length} รายการ</div>
-                  <button disabled={!selectedIds.length} onClick={() => deleteDocuments(selectedIds)} className="inline-flex items-center gap-2 rounded-md bg-[#9a3412] px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">
+                  <div className="rounded-md bg-[#eef3f8] px-3 py-2 text-sm font-medium text-[#0d1b2e]">{visibleDocuments.length} รายการ</div>
+                  <button
+                    onClick={() => {
+                      setEditing(null);
+                      setShowDocumentModal(true);
+                    }}
+                    className="inline-flex items-center gap-2 rounded-md bg-[#dc2626] px-3 py-2 text-sm font-semibold text-white hover:bg-[#b91c1c]"
+                  >
+                    <Plus size={15} /> เพิ่มข้อมูล
+                  </button>
+                  <button disabled={!selectedVisibleIds.length} onClick={() => deleteDocuments(selectedVisibleIds)} className="inline-flex items-center gap-2 rounded-md bg-[#9a3412] px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">
                     <Trash2 size={15} /> ลบที่เลือก
                   </button>
                 </div>
               </div>
 
+              <div className="flex gap-2 overflow-x-auto border-b border-[#0d1b2e]/10 px-5 py-3">
+                {documentCategories.map((category) => {
+                  const count = activeDocuments.filter((document) => document.category === category.value).length;
+                  const active = activeCategory === category.value;
+                  return (
+                    <button
+                      key={category.value}
+                      onClick={() => {
+                        setActiveCategory(category.value);
+                        setDocumentPage(1);
+                        setSelectedIds([]);
+                      }}
+                      className={`shrink-0 rounded-md border px-3 py-2 text-sm font-medium transition ${
+                        active ? "border-[#0d1b2e] bg-[#0d1b2e] text-white" : "border-[#0d1b2e]/10 bg-white text-[#42526a] hover:border-[#dc2626]/35 hover:text-[#0d1b2e]"
+                      }`}
+                    >
+                      {category.label} <span className={active ? "text-white/75" : "text-[#8a96a8]"}>{count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[820px] border-collapse text-sm">
+                <table className="w-full min-w-[980px] border-collapse text-sm">
                   <thead className="bg-white/55 text-left text-xs uppercase  text-[#42526a]">
                     <tr>
                       <th className="border-b border-[#0d1b2e]/10 px-4 py-3 font-semibold">
                         <CheckSquare size={15} />
                       </th>
                       <th className="border-b border-[#0d1b2e]/10 px-4 py-3 font-semibold">ชื่อข้อมูล</th>
+                      <th className="border-b border-[#0d1b2e]/10 px-4 py-3 font-semibold">ฝ่าย</th>
                       <th className="border-b border-[#0d1b2e]/10 px-4 py-3 font-semibold">ประเภท</th>
                       <th className="border-b border-[#0d1b2e]/10 px-4 py-3 font-semibold">ขนาด</th>
                       <th className="border-b border-[#0d1b2e]/10 px-4 py-3 font-semibold">สถานะ</th>
+                      <th className="border-b border-[#0d1b2e]/10 px-4 py-3 font-semibold">เพิ่มเมื่อ</th>
                       <th className="border-b border-[#0d1b2e]/10 px-4 py-3 text-right font-semibold">จัดการ</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {documents.length === 0 ? (
+                    {visibleDocuments.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="px-5 py-8 text-center text-[#42526a]">ยังไม่มีข้อมูลในตาราง</td>
+                        <td colSpan={8} className="px-5 py-8 text-center text-[#42526a]">ยังไม่มีข้อมูลในหมวดนี้</td>
                       </tr>
                     ) : (
-                      documents.map((document) => (
+                      pagedDocuments.map((document) => (
                         <tr key={document.id} className="border-b border-[#eef1ec] last:border-b-0">
                           <td className="px-4 py-4">
                             <input type="checkbox" checked={selectedIds.includes(document.id)} onChange={() => toggleSelected(document.id)} />
@@ -629,11 +698,20 @@ export function PTechApp() {
                               <span className="truncate font-medium">{document.title}</span>
                             </div>
                           </td>
+                          <td className="px-4 py-4 text-[#42526a]">{categoryLabel(document.category)}</td>
                           <td className="px-4 py-4 text-[#42526a]">{sourceLabel(document.source_type)}</td>
                           <td className="px-4 py-4 text-[#42526a]">{formatFileSize(document.file_size)}</td>
                           <td className="px-4 py-4 text-[#42526a]">{formatDate(document.expires_at)}</td>
+                          <td className="px-4 py-4 text-[#42526a]">{formatDate(document.created_at)}</td>
                           <td className="px-4 py-4 text-right">
-                            <button onClick={() => setEditing({ id: document.id, title: document.title, text: document.extracted_text || "", expiresAt: toDateTimeLocal(document.expires_at), notes: document.notes || "" })} className="mr-1 inline-flex items-center justify-center rounded-md p-2 text-[#0d1b2e] hover:bg-[#eef3f8]" aria-label="แก้ไข">
+                            <button
+                              onClick={() => {
+                                setEditing({ id: document.id, title: document.title, text: document.extracted_text || "", expiresAt: toDateTimeLocal(document.expires_at), notes: document.notes || "", category: document.category });
+                                setShowDocumentModal(true);
+                              }}
+                              className="mr-1 inline-flex items-center justify-center rounded-md p-2 text-[#0d1b2e] hover:bg-[#eef3f8]"
+                              aria-label="แก้ไข"
+                            >
                               <Edit3 size={16} />
                             </button>
                             <button onClick={() => deleteDocuments([document.id])} className="inline-flex items-center justify-center rounded-md p-2 text-[#9a3412] hover:bg-[#fff1e8]" aria-label="ลบ">
@@ -646,57 +724,94 @@ export function PTechApp() {
                   </tbody>
                 </table>
               </div>
-            </section>
 
-            <aside className="rounded-lg border border-[#0d1b2e]/10 bg-white p-4">
-              {editing ? (
-                <>
-                  <div className="mb-4 flex items-center justify-between">
-                    <div>
-                      <h2 className="font-semibold">แก้ไขข้อมูล</h2>
-                      <p className="text-sm text-[#42526a]">แก้ไขข้อมูลข้อความในฐาน</p>
-                    </div>
-                    <button onClick={() => setEditing(null)} className="rounded-md border border-[#0d1b2e]/10 p-2 text-[#42526a] hover:bg-[#eef3f8]">
-                      <X size={16} />
-                    </button>
-                  </div>
-                  <form onSubmit={submitEdit} className="space-y-3">
-                    <input name="title" defaultValue={editing.title} placeholder="ชื่อข้อมูล" className="w-full rounded-md border border-[#0d1b2e]/15 px-3 py-2.5 text-sm outline-none focus:border-[#dc2626]" />
-                    <textarea name="text" defaultValue={editing.text} rows={7} placeholder="ข้อความ" className="w-full resize-none rounded-md border border-[#0d1b2e]/15 px-3 py-2.5 text-sm leading-6 outline-none focus:border-[#dc2626]" />
-                    <label className="block text-xs font-medium text-[#42526a]">
-                      Auto delete time เว้นว่าง = ถาวร
-                      <input name="expiresAt" type="datetime-local" defaultValue={editing.expiresAt} className="mt-1 w-full rounded-md border border-[#0d1b2e]/15 px-3 py-2.5 text-sm outline-none focus:border-[#dc2626]" />
-                    </label>
-                    <textarea name="notes" defaultValue={editing.notes} rows={3} placeholder="บันทึกเพิ่มเติม" className="w-full resize-none rounded-md border border-[#0d1b2e]/15 px-3 py-2.5 text-sm leading-6 outline-none focus:border-[#dc2626]" />
-                    <button disabled={saving} className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#0d1b2e] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#162b48] disabled:opacity-50">
-                      {saving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />} Save edit
-                    </button>
-                  </form>
-                </>
-              ) : (
-                <>
-                  <h2 className="font-semibold">เพิ่มข้อมูลใหม่</h2>
-                  <p className="mb-4 text-sm text-[#42526a]">ไม่ตั้งเวลา = ข้อมูลถาวร</p>
-                  <form onSubmit={submitCreate} className="space-y-3">
-                    <input name="title" placeholder="ชื่อข้อมูล" className="w-full rounded-md border border-[#0d1b2e]/15 px-3 py-2.5 text-sm outline-none focus:border-[#dc2626]" />
-                    <textarea name="text" rows={6} placeholder="ใส่ข้อความที่ต้องการเพิ่มเข้าฐานข้อมูล" className="w-full resize-none rounded-md border border-[#0d1b2e]/15 px-3 py-2.5 text-sm leading-6 outline-none focus:border-[#dc2626]" />
-                    <input name="file" type="file" accept=".pdf,.doc,.docx,image/*" className="w-full rounded-md border border-dashed border-[#0d1b2e]/15 px-3 py-3 text-sm" />
-                    <label className="block text-xs font-medium text-[#42526a]">
-                      Auto delete time เว้นว่าง = ถาวร
-                      <input name="expiresAt" type="datetime-local" className="mt-1 w-full rounded-md border border-[#0d1b2e]/15 px-3 py-2.5 text-sm outline-none focus:border-[#dc2626]" />
-                    </label>
-                    <textarea name="notes" rows={3} placeholder="บันทึกเพิ่มเติม" className="w-full resize-none rounded-md border border-[#0d1b2e]/15 px-3 py-2.5 text-sm leading-6 outline-none focus:border-[#dc2626]" />
-                    <button disabled={saving} className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#dc2626] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#b91c1c] disabled:opacity-50">
-                      {saving ? <Loader2 className="animate-spin" size={16} /> : <Upload size={16} />} Save
-                    </button>
-                  </form>
-                </>
-              )}
-              {adminError && <div className="mt-4 rounded-md bg-red-50 p-3 text-sm leading-6 text-red-700">{adminError}</div>}
-            </aside>
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#0d1b2e]/10 px-5 py-4">
+                <div className="text-sm text-[#42526a]">
+                  หน้า {currentDocumentPage} จาก {totalDocumentPages} · แสดง {pagedDocuments.length} จาก {visibleDocuments.length} รายการ
+                </div>
+                <div className="flex flex-wrap items-center gap-1">
+                  <button
+                    disabled={currentDocumentPage <= 1}
+                    onClick={() => setDocumentPage((page) => Math.max(1, page - 1))}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[#0d1b2e]/10 text-[#0d1b2e] disabled:opacity-35"
+                    aria-label="หน้าก่อนหน้า"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  {Array.from({ length: totalDocumentPages }, (_, index) => index + 1)
+                    .slice(Math.max(0, currentDocumentPage - 3), Math.min(totalDocumentPages, currentDocumentPage + 2))
+                    .map((page) => (
+                      <button
+                        key={page}
+                        onClick={() => setDocumentPage(page)}
+                        className={`h-9 min-w-9 rounded-md border px-3 text-sm font-medium ${
+                          page === currentDocumentPage ? "border-[#0d1b2e] bg-[#0d1b2e] text-white" : "border-[#0d1b2e]/10 bg-white text-[#0d1b2e] hover:border-[#dc2626]/35"
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                  <button
+                    disabled={currentDocumentPage >= totalDocumentPages}
+                    onClick={() => setDocumentPage((page) => Math.min(totalDocumentPages, page + 1))}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[#0d1b2e]/10 text-[#0d1b2e] disabled:opacity-35"
+                    aria-label="หน้าถัดไป"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
+            </section>
+            {adminError && <div className="rounded-md bg-red-50 p-3 text-sm leading-6 text-red-700">{adminError}</div>}
           </section>
         )}
 
+        {adminEmail && showDocumentModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0d1b2e]/45 p-4 backdrop-blur-sm">
+            <section className="max-h-[92vh] w-full max-w-[760px] overflow-hidden rounded-lg border border-white/70 bg-white shadow-[0_24px_80px_rgba(13,27,46,0.24)]">
+              <div className="flex items-center justify-between gap-3 border-b border-[#0d1b2e]/10 px-5 py-4">
+                <div>
+                  <h2 className="font-semibold">{editing ? "แก้ไขข้อมูล" : "เพิ่มข้อมูลใหม่"}</h2>
+                  <p className="text-sm text-[#42526a]">เลือกฝ่ายและตั้งวันหมดอายุได้ ถ้าเว้นว่างจะเป็นข้อมูลถาวร</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowDocumentModal(false);
+                    setEditing(null);
+                  }}
+                  className="rounded-md border border-[#0d1b2e]/10 p-2 text-[#42526a] hover:bg-[#eef3f8]"
+                  aria-label="ปิด"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              <form onSubmit={editing ? submitEdit : submitCreate} className="max-h-[calc(92vh-80px)] space-y-3 overflow-y-auto p-5">
+                <label className="block text-xs font-medium text-[#42526a]">
+                  ฝ่าย / ฐานข้อมูล
+                  <select name="category" defaultValue={editing?.category ?? activeCategory} className="mt-1 w-full rounded-md border border-[#0d1b2e]/15 px-3 py-2.5 text-sm outline-none focus:border-[#dc2626]">
+                    {documentCategories.map((category) => (
+                      <option key={category.value} value={category.value}>
+                        {category.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <input name="title" defaultValue={editing?.title ?? ""} placeholder="ชื่อข้อมูล" className="w-full rounded-md border border-[#0d1b2e]/15 px-3 py-2.5 text-sm outline-none focus:border-[#dc2626]" />
+                <textarea name="text" defaultValue={editing?.text ?? ""} rows={8} placeholder="ใส่ข้อความที่ต้องการเพิ่มเข้าฐานข้อมูล" className="w-full resize-none rounded-md border border-[#0d1b2e]/15 px-3 py-2.5 text-sm leading-6 outline-none focus:border-[#dc2626]" />
+                {!editing && <input name="file" type="file" accept=".pdf,.doc,.docx,image/*" className="w-full rounded-md border border-dashed border-[#0d1b2e]/15 px-3 py-3 text-sm" />}
+                <label className="block text-xs font-medium text-[#42526a]">
+                  Auto delete time เว้นว่าง = ถาวร
+                  <input name="expiresAt" type="datetime-local" defaultValue={editing?.expiresAt ?? ""} className="mt-1 w-full rounded-md border border-[#0d1b2e]/15 px-3 py-2.5 text-sm outline-none focus:border-[#dc2626]" />
+                </label>
+                <textarea name="notes" defaultValue={editing?.notes ?? ""} rows={3} placeholder="บันทึกเพิ่มเติม" className="w-full resize-none rounded-md border border-[#0d1b2e]/15 px-3 py-2.5 text-sm leading-6 outline-none focus:border-[#dc2626]" />
+                <button disabled={saving} className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#dc2626] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#b91c1c] disabled:opacity-50">
+                  {saving ? <Loader2 className="animate-spin" size={16} /> : editing ? <Save size={16} /> : <Upload size={16} />} {editing ? "Save edit" : "Save"}
+                </button>
+                {adminError && <div className="rounded-md bg-red-50 p-3 text-sm leading-6 text-red-700">{adminError}</div>}
+              </form>
+            </section>
+          </div>
+        )}
         {showLogin && !adminEmail && (
           <section className="mb-4 rounded-lg border border-[#0d1b2e]/10 bg-white/80 p-4 shadow-sm backdrop-blur-xl">
             <form onSubmit={submitLogin} className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">

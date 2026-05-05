@@ -1,8 +1,16 @@
 import { NextResponse } from "next/server";
 import { requireAdminSession } from "@/lib/auth";
 import { deleteDocument, updateTextDocument } from "@/lib/knowledge";
+import type { KnowledgeDocument } from "@/lib/types";
 
 export const runtime = "nodejs";
+
+const categories: KnowledgeDocument["category"][] = ["branch", "academic", "student_development", "academic_staff", "other"];
+
+function normalizeCategory(value: unknown): KnowledgeDocument["category"] {
+  const category = String(value || "branch") as KnowledgeDocument["category"];
+  return categories.includes(category) ? category : "branch";
+}
 
 export async function DELETE(_request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -26,6 +34,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
       text?: string;
       expiresAt?: string | null;
       notes?: string;
+      category?: string;
     };
 
     const document = await updateTextDocument({
@@ -34,6 +43,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
       text: String(body.text || ""),
       expiresAt: body.expiresAt || null,
       notes: String(body.notes || ""),
+      category: normalizeCategory(body.category),
     });
 
     return NextResponse.json({ document });

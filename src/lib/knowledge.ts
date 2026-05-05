@@ -62,6 +62,7 @@ export async function listDocuments() {
     .from("knowledge_documents")
     .select("*")
     .is("deleted_at", null)
+    .order("expires_at", { ascending: true, nullsFirst: false })
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -76,6 +77,7 @@ async function insertDocument(input: {
   fileSize: number | null;
   extractedText: string;
   notes: string;
+  category: KnowledgeDocument["category"];
   expiresAt: string | null;
 }) {
   const supabase = getSupabaseAdmin();
@@ -89,6 +91,7 @@ async function insertDocument(input: {
       file_size: input.fileSize,
       extracted_text: input.extractedText,
       notes: input.notes || null,
+      category: input.category,
       expires_at: input.expiresAt || null,
     })
     .select("*")
@@ -116,6 +119,7 @@ export async function createTextKnowledgeDocument(input: {
   text: string;
   expiresAt: string | null;
   notes: string;
+  category: KnowledgeDocument["category"];
 }) {
   const text = input.text.trim();
   if (!text) throw new Error("กรุณาใส่ข้อความหรือเลือกไฟล์");
@@ -128,6 +132,7 @@ export async function createTextKnowledgeDocument(input: {
     fileSize: Buffer.byteLength(text, "utf8"),
     extractedText: text,
     notes: input.notes,
+    category: input.category,
     expiresAt: input.expiresAt,
   });
 }
@@ -137,6 +142,7 @@ export async function createKnowledgeDocument(input: {
   title: string;
   expiresAt: string | null;
   notes: string;
+  category: KnowledgeDocument["category"];
 }) {
   const supabase = getSupabaseAdmin();
   const mimeType = input.file.type || "application/octet-stream";
@@ -158,6 +164,7 @@ export async function createKnowledgeDocument(input: {
     fileSize: input.file.size,
     extractedText,
     notes: input.notes,
+    category: input.category,
     expiresAt: input.expiresAt,
   });
 }
@@ -185,6 +192,7 @@ export async function updateTextDocument(input: {
   text: string;
   expiresAt: string | null;
   notes: string;
+  category: KnowledgeDocument["category"];
 }) {
   const supabase = getSupabaseAdmin();
   const text = input.text.trim();
@@ -199,6 +207,7 @@ export async function updateTextDocument(input: {
       file_size: Buffer.byteLength(text, "utf8"),
       extracted_text: text,
       notes: input.notes || null,
+      category: input.category,
       expires_at: input.expiresAt || null,
     })
     .eq("id", input.id)
