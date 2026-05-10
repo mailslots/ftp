@@ -26,6 +26,15 @@ type NineQMonthlySummary = { month: string; total: number; mild: number; moderat
 type ProviderMode = "gemini" | "groq" | "openrouter" | "deepseek";
 type AiUsagePeriod = "day" | "month" | "year" | "all";
 type AiUsageRow = { id: string; order: number; provider: ProviderMode; model: string; count: number; used: boolean };
+type FacultyRow = {
+  curriculum: string;
+  position: string;
+  name: string;
+  nickname: string;
+  englishName: string;
+  deskLocation: string;
+  notes: string;
+};
 
 const documentCategories: { value: DocumentCategory; label: string }[] = [
   { value: "branch", label: "ฐานข้อมูลสาขา" },
@@ -37,6 +46,7 @@ const documentCategories: { value: DocumentCategory; label: string }[] = [
 ];
 
 const documentsPerPage = 10;
+const facultyRosterTitle = "AI READY academic staff MCT curriculum faculty roster";
 
 const faqItems: FaqItem[] = [
   { label: "ปี 1 เทอม 1 เรียนอะไร?", action: "chat" },
@@ -110,6 +120,82 @@ function sortDocumentsByExpiry(documents: KnowledgeDocument[]) {
     const bTime = b.expires_at ? new Date(b.expires_at).getTime() : Number.POSITIVE_INFINITY;
     if (aTime !== bTime) return aTime - bTime;
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+}
+
+function isFacultyRosterDocument(document: Pick<KnowledgeDocument, "title"> | EditState) {
+  return document?.title === facultyRosterTitle;
+}
+
+function parseFacultyRows(text: string): FacultyRow[] {
+  const rows: FacultyRow[] = [];
+  let currentCurriculum = "";
+  for (const rawLine of text.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (line.startsWith("หลักสูตร:")) {
+      currentCurriculum = line.replace(/^หลักสูตร:\s*/, "").trim();
+      continue;
+    }
+    if (!line.startsWith("- ")) continue;
+    const content = line.slice(2).trim();
+    if (/ชื่อเล่น|ชื่อภาษาอังกฤษ|อีเมล|หมายเหตุ/.test(content)) continue;
+    const match = content.match(/^(.+?)\s+(.+?)(?:\s+\((.+)\))?$/);
+    rows.push({
+      curriculum: currentCurriculum,
+      position: match?.[1]?.trim() || "",
+      name: match?.[2]?.trim() || content,
+      nickname: "",
+      englishName: "",
+      deskLocation: "",
+      notes: match?.[3]?.trim() || "",
+    });
+  }
+  return rows;
+}
+
+function serializeFacultyRows(rows: FacultyRow[]) {
+  const grouped = rows.reduce<Record<string, FacultyRow[]>>((acc, row) => {
+    const curriculum = row.curriculum.trim() || "ไม่ระบุหลักสูตร";
+    acc[curriculum] = acc[curriculum] || [];
+    acc[curriculum].push(row);
+    return acc;
+  }, {});
+
+  const lines = ["AI READY ฝ่ายบริหาร รายชื่อคณาจารย์แยกตามหลักสูตรคณะเทคโนโลยีสื่อสารมวลชน"];
+  for (const [curriculum, items] of Object.entries(grouped)) {
+    lines.push("", `หลักสูตร: ${curriculum}`);
+    for (const item of items) {
+      const details = [
+        item.notes.trim(),
+        item.nickname.trim() ? `ชื่อเล่น: ${item.nickname.trim()}` : "",
+        item.englishName.trim() ? `ชื่ออังกฤษ: ${item.englishName.trim()}` : "",
+        item.deskLocation.trim() ? `โต๊ะทำงาน: ${item.deskLocation.trim()}` : "",
+      ].filter(Boolean);
+      lines.push(`- ${item.position.trim()} ${item.name.trim()}${details.length ? ` (${details.join("; ")})` : ""}`);
+    }
+  }
+  lines.push(
+    "",
+    "แนวทางตอบนักศึกษา: ถ้าถามว่าอาจารย์ในหลักสูตรมีใครบ้าง ใครเป็นประธานหลักสูตร รายชื่อคณาจารย์ ชื่อเล่น ชื่อภาษาอังกฤษ หรือโต๊ะทำงานของอาจารย์ ให้ตอบจากรายชื่อในเอกสารนี้แบบแยกหลักสูตร กระชับ และบอกเฉพาะข้อมูลที่มี",
+  );
+  return lines.join("\n");
+}
+
+function renderChatContent(content: string, isUser: boolean) {
+  const parts = content.split(/(https?:\/\/[^\s<>"')]+)/g);
+  return parts.map((part, index) => {
+    if (!/^https?:\/\//i.test(part)) return part;
+    return (
+      <a
+        key={`${part}-${index}`}
+        href={part}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={isUser ? "underline decoration-white/70 underline-offset-4" : "font-semibold text-[#dc2626] underline underline-offset-4"}
+      >
+        {part}
+      </a>
+    );
   });
 }
 
@@ -233,6 +319,7 @@ export function PTechApp() {
   const [adminError, setAdminError] = useState("");
   const [saving, setSaving] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [facultyRows, setFacultyRows] = useState<FacultyRow[]>([]);
   const [showNineQ, setShowNineQ] = useState(false);
   const [nineQStep, setNineQStep] = useState(0);
   const [nineQAnswers, setNineQAnswers] = useState<number[]>(Array(nineQQuestions.length).fill(-1));
@@ -478,12 +565,13 @@ export function PTechApp() {
     setAdminError("");
     const form = new FormData(event.currentTarget);
     try {
+      const text = editing && isFacultyRosterDocument(editing) ? serializeFacultyRows(facultyRows) : String(form.get("text") || "");
       const response = await fetch(`/api/admin/documents/${editing.id}`, {
         method: "PUT",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           title: form.get("title"),
-          text: form.get("text"),
+          text,
           expiresAt: String(form.get("expiresAt") || "") || null,
           notes: form.get("notes"),
           category: form.get("category"),
@@ -492,6 +580,7 @@ export function PTechApp() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Update failed");
       setEditing(null);
+      setFacultyRows([]);
       setShowDocumentModal(false);
       setRefreshKey((key) => key + 1);
     } catch (error) {
@@ -659,7 +748,7 @@ export function PTechApp() {
                     <Image src={ptechAvatar} alt="พี่เทค" width={36} height={36} className="mr-2 mt-1 h-9 w-9 shrink-0 rounded-full border border-white object-cover object-[50%_34%] shadow-sm" />
                   )}
                   <div className={`max-w-[82%] whitespace-pre-wrap rounded-lg px-4 py-3 text-sm leading-7 shadow-sm ${message.role === "user" ? "bg-[#0d1b2e] text-white" : "border border-white/80 bg-white/72 text-[#0d1b2e] backdrop-blur-xl"}`}>
-                    {message.content}
+                    {renderChatContent(message.content, message.role === "user")}
                   </div>
                 </div>
               ))}
@@ -818,6 +907,7 @@ export function PTechApp() {
                   <button
                     onClick={() => {
                       setEditing(null);
+                      setFacultyRows([]);
                       setShowDocumentModal(true);
                     }}
                     className="inline-flex items-center gap-2 rounded-md bg-[#dc2626] px-3 py-2 text-sm font-semibold text-white hover:bg-[#b91c1c]"
@@ -894,6 +984,7 @@ export function PTechApp() {
                             <button
                               onClick={() => {
                                 setEditing({ id: document.id, title: document.title, text: document.extracted_text || "", expiresAt: toDateTimeLocal(document.expires_at), notes: document.notes || "", category: document.category });
+                                setFacultyRows(isFacultyRosterDocument(document) ? parseFacultyRows(document.extracted_text || "") : []);
                                 setShowDocumentModal(true);
                               }}
                               className="mr-1 inline-flex items-center justify-center rounded-md p-2 text-[#0d1b2e] hover:bg-[#eef3f8]"
@@ -955,7 +1046,7 @@ export function PTechApp() {
 
         {adminEmail && showDocumentModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0d1b2e]/45 p-4 backdrop-blur-sm">
-            <section className="max-h-[92vh] w-full max-w-[760px] overflow-hidden rounded-lg border border-white/70 bg-white shadow-[0_24px_80px_rgba(13,27,46,0.24)]">
+            <section className={`max-h-[92vh] w-full overflow-hidden rounded-lg border border-white/70 bg-white shadow-[0_24px_80px_rgba(13,27,46,0.24)] ${editing && isFacultyRosterDocument(editing) ? "max-w-[1180px]" : "max-w-[760px]"}`}>
               <div className="flex items-center justify-between gap-3 border-b border-[#0d1b2e]/10 px-5 py-4">
                 <div>
                   <h2 className="font-semibold">{editing ? "แก้ไขข้อมูล" : "เพิ่มข้อมูลใหม่"}</h2>
@@ -965,6 +1056,7 @@ export function PTechApp() {
                   onClick={() => {
                     setShowDocumentModal(false);
                     setEditing(null);
+                    setFacultyRows([]);
                   }}
                   className="rounded-md border border-[#0d1b2e]/10 p-2 text-[#42526a] hover:bg-[#eef3f8]"
                   aria-label="ปิด"
@@ -984,7 +1076,66 @@ export function PTechApp() {
                   </select>
                 </label>
                 <input name="title" defaultValue={editing?.title ?? ""} placeholder="ชื่อข้อมูล" className="w-full rounded-md border border-[#0d1b2e]/15 px-3 py-2.5 text-sm outline-none focus:border-[#dc2626]" />
-                <textarea name="text" defaultValue={editing?.text ?? ""} rows={8} placeholder="ใส่ข้อความที่ต้องการเพิ่มเข้าฐานข้อมูล" className="w-full resize-none rounded-md border border-[#0d1b2e]/15 px-3 py-2.5 text-sm leading-6 outline-none focus:border-[#dc2626]" />
+                {editing && isFacultyRosterDocument(editing) ? (
+                  <div className="rounded-lg border border-[#0d1b2e]/10">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#0d1b2e]/10 px-3 py-2">
+                      <div className="text-sm font-semibold text-[#0d1b2e]">ตารางคณาจารย์</div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setFacultyRows((current) => [
+                            ...current,
+                            { curriculum: "", position: "", name: "", nickname: "", englishName: "", deskLocation: "", notes: "" },
+                          ])
+                        }
+                        className="rounded-md bg-[#0d1b2e] px-3 py-1.5 text-xs font-semibold text-white"
+                      >
+                        เพิ่มแถว
+                      </button>
+                    </div>
+                    <div className="max-h-[48vh] overflow-auto">
+                      <table className="w-full min-w-[1080px] border-collapse text-xs">
+                        <thead className="sticky top-0 bg-white text-left text-[#42526a]">
+                          <tr>
+                            {["หลักสูตร", "ตำแหน่ง", "ชื่อ", "ชื่อเล่น", "ชื่ออังกฤษ", "โต๊ะทำงาน", "หมายเหตุ", ""].map((header) => (
+                              <th key={header} className="border-b border-[#0d1b2e]/10 px-2 py-2 font-semibold">{header}</th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {facultyRows.map((row, rowIndex) => (
+                            <tr key={rowIndex} className="border-b border-[#eef1ec]">
+                              {(["curriculum", "position", "name", "nickname", "englishName", "deskLocation", "notes"] as const).map((field) => (
+                                <td key={field} className="px-2 py-2 align-top">
+                                  <input
+                                    value={row[field]}
+                                    onChange={(event) =>
+                                      setFacultyRows((current) => current.map((item, index) => (index === rowIndex ? { ...item, [field]: event.target.value } : item)))
+                                    }
+                                    className="w-full rounded border border-[#0d1b2e]/10 px-2 py-1.5 outline-none focus:border-[#dc2626]"
+                                  />
+                                </td>
+                              ))}
+                              <td className="px-2 py-2 text-right align-top">
+                                <button
+                                  type="button"
+                                  onClick={() => setFacultyRows((current) => current.filter((_, index) => index !== rowIndex))}
+                                  className="rounded-md p-1.5 text-[#9a3412] hover:bg-[#fff1e8]"
+                                  aria-label="ลบแถว"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <textarea name="text" value={serializeFacultyRows(facultyRows)} readOnly className="sr-only" />
+                  </div>
+                ) : (
+                  <textarea name="text" defaultValue={editing?.text ?? ""} rows={8} placeholder="ใส่ข้อความที่ต้องการเพิ่มเข้าฐานข้อมูล" className="w-full resize-none rounded-md border border-[#0d1b2e]/15 px-3 py-2.5 text-sm leading-6 outline-none focus:border-[#dc2626]" />
+                )}
                 {!editing && <input name="file" type="file" accept=".pdf,.doc,.docx,image/*" className="w-full rounded-md border border-dashed border-[#0d1b2e]/15 px-3 py-3 text-sm" />}
                 <label className="block text-xs font-medium text-[#42526a]">
                   Auto delete time เว้นว่าง = ถาวร
