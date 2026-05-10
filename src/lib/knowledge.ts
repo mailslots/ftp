@@ -353,6 +353,19 @@ export async function searchKnowledge(query: string) {
     "creativity",
     "innovative management",
     "learning to be innovator",
+    "คณบดี",
+    "รองคณบดี",
+    "ผู้ช่วยคณบดี",
+    "หัวหน้าสาขา",
+    "ประธานหลักสูตร",
+    "คณาจารย์",
+    "รายชื่ออาจารย์",
+    "ชื่อเล่น",
+    "โต๊ะทำงาน",
+    "ห้องทำงาน",
+    "ประภาภร",
+    "อรสุชา",
+    "เทคโนโลยีการผลิตภาพยนตร์และวิทยุโทรทัศน์",
   ];
   for (const keyword of faqKeywords) {
     if (normalizedQuery.includes(keyword)) terms.push(keyword);

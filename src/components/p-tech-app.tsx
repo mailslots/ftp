@@ -140,14 +140,17 @@ function parseFacultyRows(text: string): FacultyRow[] {
     const content = line.slice(2).trim();
     if (/ชื่อเล่น|ชื่อภาษาอังกฤษ|อีเมล|หมายเหตุ/.test(content)) continue;
     const match = content.match(/^(.+?)\s+(.+?)(?:\s+\((.+)\))?$/);
+    const details = (match?.[3] || "").split(";").map((item) => item.trim()).filter(Boolean);
+    const detailValue = (label: string) => details.find((item) => item.startsWith(`${label}:`))?.replace(`${label}:`, "").trim() || "";
+    const notes = details.filter((item) => !/^ชื่อเล่น:|^ชื่ออังกฤษ:|^โต๊ะทำงาน:/.test(item)).join("; ");
     rows.push({
       curriculum: currentCurriculum,
       position: match?.[1]?.trim() || "",
       name: match?.[2]?.trim() || content,
-      nickname: "",
-      englishName: "",
-      deskLocation: "",
-      notes: match?.[3]?.trim() || "",
+      nickname: detailValue("ชื่อเล่น"),
+      englishName: detailValue("ชื่ออังกฤษ"),
+      deskLocation: detailValue("โต๊ะทำงาน"),
+      notes,
     });
   }
   return rows;

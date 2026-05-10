@@ -27,6 +27,7 @@ type ChatIntent =
   | { type: "mental_health"; query: string }
   | { type: "insurance"; query: string }
   | { type: "retire"; query: string }
+  | { type: "faculty_roster"; query: string }
   | { type: "academic_calendar"; query: string }
   | { type: "administration_policy"; query: string }
   | { type: "orientation"; query: string }
@@ -248,11 +249,17 @@ function isAdministrationPolicyQuestion(question: string) {
   return /นโยบาย|วิสัยทัศน์|ยุทธศาสตร์|วัฒนธรรมองค์กร|ค่านิยม|ฝ่ายบริหาร|mct|moral|creativity|innovative management|learning to be innovator/.test(lower);
 }
 
+function isFacultyRosterQuestion(question: string) {
+  const lower = question.toLowerCase();
+  return /คณบดี|รองคณบดี|ผู้ช่วยคณบดี|ประธานหลักสูตร|หัวหน้าสาขา|คณาจารย์|รายชื่ออาจารย์|อาจารย์.*ใครบ้าง|ชื่อเล่น.*อาจารย์|โต๊ะทำงาน|ห้องทำงาน|ประภาภร|อรสุชา|อุกฤษ|ไวยวุฒิ|กิตติพร|อิทธิพล|สุวัฒน์|อนุสรณ์|ภูเบศ|วิษณุพร|จิรศักดิ์|กมล สังข์ทอง|วิภาวี|กุลกนิษฐ์|คำรณ|ภาณินี|ชาลิน|กุลภัสสร์/.test(lower);
+}
+
 function isKnowledgeIntent(question: string) {
   if (isAcademicCalendarQuestion(question)) return true;
   if (isAdministrationPolicyQuestion(question)) return true;
+  if (isFacultyRosterQuestion(question)) return true;
   const lower = question.toLowerCase();
-  return /\d{2}-\d{3}-\d{3}|\u0e04\u0e33\u0e2d\u0e18\u0e34\u0e1a\u0e32\u0e22\u0e23\u0e32\u0e22\u0e27\u0e34\u0e0a\u0e32|\u0e2a\u0e2d\u0e19\u0e2d\u0e30\u0e44\u0e23|\u0e1b\u0e35\s*\d|\u0e40\u0e17\u0e2d\u0e21\s*\d|\u0e40\u0e23\u0e35\u0e22\u0e19\u0e2d\u0e30\u0e44\u0e23|\u0e23\u0e32\u0e22\u0e27\u0e34\u0e0a\u0e32|\u0e27\u0e34\u0e0a\u0e32|\u0e41\u0e1c\u0e19\u0e01\u0e32\u0e23\u0e40\u0e23\u0e35\u0e22\u0e19|retire|\u0e23\u0e35\u0e44\u0e17\u0e23\u0e4c|\u0e1e\u0e49\u0e19\u0e2a\u0e20\u0e32\u0e1e|gpa|\u0e40\u0e01\u0e23\u0e14\u0e40\u0e09\u0e25\u0e35\u0e48\u0e22|\u0e2b\u0e25\u0e31\u0e01\u0e2a\u0e39\u0e15\u0e23|\u0e2b\u0e19\u0e48\u0e27\u0e22\u0e01\u0e34\u0e15|\u0e2d\u0e32\u0e0a\u0e35\u0e1e|\u0e1d\u0e36\u0e01\u0e07\u0e32\u0e19|\u0e2a\u0e2b\u0e01\u0e34\u0e08|\u0e2a\u0e21\u0e31\u0e04\u0e23|\u0e2d\u0e32\u0e08\u0e32\u0e23\u0e22\u0e4c|\u0e1b\u0e23\u0e30\u0e01\u0e31\u0e19|\u0e40\u0e04\u0e23\u0e35\u0e22\u0e14|\u0e40\u0e28\u0e23\u0e49\u0e32|\u0e44\u0e21\u0e48\u0e42\u0e2d\u0e40\u0e04|\u0e04\u0e25\u0e34\u0e19\u0e34\u0e01\u0e01\u0e33\u0e25\u0e31\u0e07\u0e43\u0e08|\u0e01\u0e33\u0e25\u0e31\u0e07\u0e43\u0e08|\u0e2a\u0e38\u0e02\u0e20\u0e32\u0e1e\u0e08\u0e34\u0e15|\u0e08\u0e34\u0e15\u0e27\u0e34\u0e17\u0e22\u0e32|\u0e1b\u0e23\u0e36\u0e01\u0e29\u0e32|\u0e2a\u0e32\u0e22\u0e14\u0e48\u0e27\u0e19|\u0e2b\u0e21\u0e14\u0e44\u0e1f|\u0e01\u0e31\u0e07\u0e27\u0e25|\u0e2a\u0e23\u0e49\u0e32\u0e07\u0e2a\u0e38\u0e02|\u0e04\u0e27\u0e32\u0e21\u0e2a\u0e38\u0e02|\u0e14\u0e39\u0e41\u0e25\u0e43\u0e08|\u0e1e\u0e35\u0e48\u0e40\u0e17\u0e04|take care|technology|hotline|facebook|เงินรางวัล|คืนเงินค่าสอบ|ค่าสอบวัดระดับภาษา|วัดระดับภาษา|toeic|ielts|toefl|jlpt|hsk|hskk|นโยบาย|วิสัยทัศน์|ยุทธศาสตร์|วัฒนธรรมองค์กร|ค่านิยม|mct|moral|creativity|innovative management|learning to be innovator/.test(lower);
+  return /\d{2}-\d{3}-\d{3}|\u0e04\u0e33\u0e2d\u0e18\u0e34\u0e1a\u0e32\u0e22\u0e23\u0e32\u0e22\u0e27\u0e34\u0e0a\u0e32|\u0e2a\u0e2d\u0e19\u0e2d\u0e30\u0e44\u0e23|\u0e1b\u0e35\s*\d|\u0e40\u0e17\u0e2d\u0e21\s*\d|\u0e40\u0e23\u0e35\u0e22\u0e19\u0e2d\u0e30\u0e44\u0e23|\u0e23\u0e32\u0e22\u0e27\u0e34\u0e0a\u0e32|\u0e27\u0e34\u0e0a\u0e32|\u0e41\u0e1c\u0e19\u0e01\u0e32\u0e23\u0e40\u0e23\u0e35\u0e22\u0e19|retire|\u0e23\u0e35\u0e44\u0e17\u0e23\u0e4c|\u0e1e\u0e49\u0e19\u0e2a\u0e20\u0e32\u0e1e|gpa|\u0e40\u0e01\u0e23\u0e14\u0e40\u0e09\u0e25\u0e35\u0e48\u0e22|\u0e2b\u0e25\u0e31\u0e01\u0e2a\u0e39\u0e15\u0e23|\u0e2b\u0e19\u0e48\u0e27\u0e22\u0e01\u0e34\u0e15|\u0e2d\u0e32\u0e0a\u0e35\u0e1e|\u0e1d\u0e36\u0e01\u0e07\u0e32\u0e19|\u0e2a\u0e2b\u0e01\u0e34\u0e08|\u0e2a\u0e21\u0e31\u0e04\u0e23|\u0e2d\u0e32\u0e08\u0e32\u0e23\u0e22\u0e4c|\u0e1b\u0e23\u0e30\u0e01\u0e31\u0e19|\u0e40\u0e04\u0e23\u0e35\u0e22\u0e14|\u0e40\u0e28\u0e23\u0e49\u0e32|\u0e44\u0e21\u0e48\u0e42\u0e2d\u0e40\u0e04|\u0e04\u0e25\u0e34\u0e19\u0e34\u0e01\u0e01\u0e33\u0e25\u0e31\u0e07\u0e43\u0e08|\u0e01\u0e33\u0e25\u0e31\u0e07\u0e43\u0e08|\u0e2a\u0e38\u0e02\u0e20\u0e32\u0e1e\u0e08\u0e34\u0e15|\u0e08\u0e34\u0e15\u0e27\u0e34\u0e17\u0e22\u0e32|\u0e1b\u0e23\u0e36\u0e01\u0e29\u0e32|\u0e2a\u0e32\u0e22\u0e14\u0e48\u0e27\u0e19|\u0e2b\u0e21\u0e14\u0e44\u0e1f|\u0e01\u0e31\u0e07\u0e27\u0e25|\u0e2a\u0e23\u0e49\u0e32\u0e07\u0e2a\u0e38\u0e02|\u0e04\u0e27\u0e32\u0e21\u0e2a\u0e38\u0e02|\u0e14\u0e39\u0e41\u0e25\u0e43\u0e08|\u0e1e\u0e35\u0e48\u0e40\u0e17\u0e04|take care|technology|hotline|facebook|เงินรางวัล|คืนเงินค่าสอบ|ค่าสอบวัดระดับภาษา|วัดระดับภาษา|toeic|ielts|toefl|jlpt|hsk|hskk|นโยบาย|วิสัยทัศน์|ยุทธศาสตร์|วัฒนธรรมองค์กร|ค่านิยม|คณาจารย์|รายชื่ออาจารย์|ประธานหลักสูตร|คณบดี|รองคณบดี|ผู้ช่วยคณบดี|หัวหน้าสาขา|ชื่อเล่น|โต๊ะทำงาน|ห้องทำงาน|mct|moral|creativity|innovative management|learning to be innovator/.test(lower);
 }
 
 function expandKnowledgeText(text: string) {
@@ -355,6 +362,13 @@ function inferIntent(messages: ChatMessage[], lastUserMessage: string): ChatInte
     return {
       type: "administration_policy",
       query: "AI READY ฝ่ายบริหาร นโยบาย วิสัยทัศน์ ยุทธศาสตร์ วัฒนธรรมองค์กร ค่านิยม MCT Moral Creativity Technology",
+    };
+  }
+
+  if (isFacultyRosterQuestion(lastUserMessage)) {
+    return {
+      type: "faculty_roster",
+      query: `AI READY ฝ่ายบริหาร รายชื่อคณาจารย์ ประธานหลักสูตร คณบดี ชื่อเล่น โต๊ะทำงาน เทคโนโลยีการผลิตภาพยนตร์และวิทยุโทรทัศน์ ${lastUserMessage}`,
     };
   }
 
@@ -803,6 +817,49 @@ function answerAiReadyQuestion(question: string, chunks: KnowledgeChunk[]) {
   return finalLines.join("\n");
 }
 
+function answerFacultyRosterQuestion(question: string, chunks: KnowledgeChunk[]) {
+  const rosterChunks = chunks.filter((chunk) => chunk.knowledge_documents?.title === "AI READY academic staff MCT curriculum faculty roster");
+  if (!rosterChunks.length) return null;
+  const content = rosterChunks.map((chunk) => chunk.content).join("\n");
+  const lines = content.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  const lower = question.toLowerCase();
+  const questionTerms = lower.split(/[\s,.;:!?()[\]{}"']+/).map((term) => term.trim()).filter((term) => term.length >= 3);
+
+  const isFilmCurriculum =
+    /ภาพยนตร์|วิทยุโทรทัศน์|ftp|film|television/.test(lower) ||
+    /อรสุชา|ประภาภร|อุกฤษ|ไวยวุฒิ|กิตติพร|อิทธิพล|สุวัฒน์|อนุสรณ์|ภูเบศ|วิษณุพร|จิรศักดิ์|กมล|วิภาวี|กุลกนิษฐ์|คำรณ|ภาณินี|ชาลิน|กุลภัสสร์/.test(lower);
+
+  const personMatches = lines.filter((line) => {
+    if (!line.startsWith("- ")) return false;
+    const compactLine = line.toLowerCase().replace(/\s+/g, "");
+    return questionTerms.some((term) => compactLine.includes(term.replace(/\s+/g, "")));
+  });
+
+  if (personMatches.length) {
+    return personMatches.slice(0, 5).join("\n");
+  }
+
+  if (/คณบดี/.test(lower)) {
+    const dean = lines.find((line) => line.includes("ประภาภร ดลกิจ"));
+    return dean ? `คณบดีคณะเทคโนโลยีสื่อสารมวลชนคือ ${dean.replace(/^- /, "")} ค่ะ` : null;
+  }
+
+  if (/ประธานหลักสูตร/.test(lower) && isFilmCurriculum) {
+    const chair = lines.find((line) => line.includes("อรสุชา อุปกิจ"));
+    return chair ? `ประธานหลักสูตรเทคโนโลยีการผลิตภาพยนตร์และวิทยุโทรทัศน์คือ ${chair.replace(/^- /, "")} ค่ะ` : null;
+  }
+
+  if (/อาจารย์|คณาจารย์|รายชื่อ/.test(lower) && isFilmCurriculum) {
+    const start = lines.findIndex((line) => line.includes("หลักสูตร: เทคโนโลยีการผลิตภาพยนตร์และวิทยุโทรทัศน์"));
+    const end = lines.findIndex((line, index) => index > start && line.startsWith("หลักสูตร:"));
+    if (start >= 0) {
+      return ["คณาจารย์หลักสูตรเทคโนโลยีการผลิตภาพยนตร์และวิทยุโทรทัศน์ มีดังนี้ค่ะ", ...lines.slice(start + 1, end > start ? end : lines.length).filter((line) => line.startsWith("- ")).slice(0, 20)].join("\n");
+    }
+  }
+
+  return null;
+}
+
 function valueFromCourseContent(content: string, label: string) {
   const labels = [
     "รหัสวิชา",
@@ -1089,6 +1146,23 @@ export async function POST(request: Request) {
         provider: "conversation-direct",
         sources: [],
       });
+    }
+
+    if (intent.type === "faculty_roster") {
+      const rosterChunks = chunks.filter((chunk) => chunk.knowledge_documents?.title === "AI READY academic staff MCT curriculum faculty roster");
+      const scopedChunks = rosterChunks.length ? rosterChunks : chunks;
+      const rosterAnswer = answerFacultyRosterQuestion(lastUserMessage, scopedChunks) || answerAiReadyQuestion(knowledgeQuery, scopedChunks);
+      if (rosterAnswer) {
+        return NextResponse.json({
+          answer: await localizeAnswer(rosterAnswer, language),
+          provider: "knowledge-direct",
+          sources: scopedChunks.map((chunk) => ({
+            id: chunk.document_id,
+            title: chunk.knowledge_documents?.title ?? "เอกสารไม่ระบุชื่อ",
+            type: chunk.knowledge_documents?.source_type ?? "text",
+          })),
+        });
+      }
     }
 
     if (intent.type === "administration_policy") {
