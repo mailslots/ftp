@@ -138,7 +138,7 @@ function parseFacultyRows(text: string): FacultyRow[] {
     }
     if (!line.startsWith("- ")) continue;
     const content = line.slice(2).trim();
-    if (/ชื่อเล่น|ชื่อภาษาอังกฤษ|อีเมล|หมายเหตุ/.test(content)) continue;
+    if (/^(ชื่อเล่น|ชื่อภาษาอังกฤษ|อีเมล\/ช่องทางติดต่อ|หมายเหตุเพิ่มเติม):/.test(content)) continue;
     const match = content.match(/^(.+?)\s+(.+?)(?:\s+\((.+)\))?$/);
     const details = (match?.[3] || "").split(";").map((item) => item.trim()).filter(Boolean);
     const detailValue = (label: string) => details.find((item) => item.startsWith(`${label}:`))?.replace(`${label}:`, "").trim() || "";
