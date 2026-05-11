@@ -50,6 +50,7 @@ const facultyRosterTitle = "AI READY academic staff MCT curriculum faculty roste
 
 const faqItems: FaqItem[] = [
   { label: "ปี 1 เทอม 1 เรียนอะไร?", action: "chat" },
+  { label: "ซื้อกล้องรุ่นไหนดี?", action: "chat", prompt: "ซื้อกล้องรุ่นไหนดี ขอคำแนะนำสำหรับนักศึกษามือใหม่ อยากได้กล้องเปลี่ยนเลนส์ได้ มือสอง DSLR ก็ได้ และเลนส์ครบช่วงกว้าง ปกติ แคบ" },
   { label: "ขอเงินรางวัล/คืนเงินค่าสอบภาษา", action: "chat", prompt: "การขอรับเงินรางวัลและการคืนเงินค่าสอบวัดระดับภาษา ทำอย่างไร?" },
   { label: "นโยบาย/วิสัยทัศน์ของคณะ", action: "chat", prompt: "นโยบาย วิสัยทัศน์ ยุทธศาสตร์ วัฒนธรรมองค์กร และค่านิยม MCT ของคณะคืออะไร?" },
   { label: "ประกันอุบัติเหตุคุ้มครองอะไรบ้าง?", action: "chat" },
@@ -65,10 +66,10 @@ const spamShortAttemptsKey = "ptech-chat-spam-short-attempts";
 const deviceIdKey = "ptech-chat-device-id";
 const languageKey = "ptech-chat-response-language";
 
-const responseLanguages: { value: ResponseLanguage; label: string; shortLabel: string; flag: string }[] = [
-  { value: "th", label: "ภาษาไทย", shortLabel: "TH", flag: "🇹🇭" },
-  { value: "en", label: "English", shortLabel: "EN", flag: "🇬🇧" },
-  { value: "zh", label: "中文", shortLabel: "ZH", flag: "🇨🇳" },
+const responseLanguages: { value: ResponseLanguage; label: string; shortLabel: string; mark: string }[] = [
+  { value: "th", label: "ภาษาไทย", shortLabel: "TH", mark: "TH" },
+  { value: "en", label: "English", shortLabel: "EN", mark: "EN" },
+  { value: "zh", label: "中文", shortLabel: "ZH", mark: "ZH" },
 ];
 
 const nineQQuestions = [
@@ -724,7 +725,15 @@ export function PTechApp() {
                   aria-label={language.label}
                   title={language.label}
                 >
-                  <span className="text-base leading-none" aria-hidden="true">{language.flag}</span>
+                  <span className={`inline-flex h-5 min-w-7 items-center justify-center rounded-sm px-1 text-[10px] font-bold leading-none ${
+                    language.value === "th"
+                      ? "bg-[#0d1b2e] text-white"
+                      : language.value === "en"
+                        ? "bg-[#eef3f8] text-[#0d1b2e]"
+                        : "bg-[#dc2626] text-white"
+                  }`} aria-hidden="true">
+                    {language.mark}
+                  </span>
                   <span className="hidden sm:inline">{language.shortLabel}</span>
                 </button>
               );
