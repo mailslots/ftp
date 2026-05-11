@@ -1041,7 +1041,7 @@ export async function POST(request: Request) {
       try {
         chunks = mergeChunks(chunks, await searchKnowledge(knowledgeQuery));
       } catch {}
-    } else if (intent.type !== "general" && intent.type !== "camera_purchase" && intent.type !== "orientation" && intent.type !== "ptech_meaning") {
+    } else if (intent.type !== "general" && intent.type !== "orientation" && intent.type !== "ptech_meaning") {
       try {
         chunks = await searchKnowledge(knowledgeQuery);
       } catch {
@@ -1237,10 +1237,34 @@ export async function POST(request: Request) {
     }
 
     if (intent.type === "camera_purchase") {
-      return NextResponse.json({
-        answer: await localizeAnswer(answerCameraPurchaseQuestion(lastUserMessage), language),
-        provider: "conversation-direct",
-        sources: [],
+      const cameraChunks = chunks.length ? chunks : await searchKnowledge("AI READY camera buying guide DSLR mirrorless เลนส์ 24-70 กล้องมือสอง");
+      if (!cameraChunks.length) {
+        return NextResponse.json({
+          answer: await localizeAnswer(answerCameraPurchaseQuestion(lastUserMessage), language),
+          provider: "conversation-direct",
+          sources: [],
+        });
+      }
+      const result = await askModel({
+        messages: [
+          ...cleanMessages,
+          {
+            role: "user",
+            content: `${lastUserMessage}\n\nช่วยตอบโดยใช้ฐานข้อมูลคำแนะนำซื้อกล้องก่อน แล้วเสริมความรู้ทั่วไปได้ ถ้าต้องอ้างรุ่น/ราคา ให้บอกว่าควรเช็กราคาปัจจุบันจากร้าน/เว็บขายของก่อนซื้อ`,
+          },
+        ],
+        chunks: cameraChunks,
+        language,
+        ...aiRouting,
+      });
+      return chatResponse(request, clientKey, cooldownEnabled, cooldownLimit, {
+        answer: presentAnswer(result.answer, language),
+        provider: result.provider,
+        sources: cameraChunks.map((chunk) => ({
+          id: chunk.document_id,
+          title: chunk.knowledge_documents?.title ?? "เอกสารไม่ระบุชื่อ",
+          type: chunk.knowledge_documents?.source_type ?? "text",
+        })),
       });
     }
 

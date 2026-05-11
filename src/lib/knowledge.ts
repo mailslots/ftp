@@ -368,6 +368,14 @@ export async function searchKnowledge(query: string) {
     "ประภาภร",
     "อรสุชา",
     "เทคโนโลยีการผลิตภาพยนตร์และวิทยุโทรทัศน์",
+    "ซื้อกล้อง",
+    "กล้อง",
+    "mirrorless",
+    "dslr",
+    "เลนส์",
+    "24-70",
+    "มือสอง",
+    "เซนเซอร์",
   ];
   for (const keyword of faqKeywords) {
     if (normalizedQuery.includes(keyword)) terms.push(keyword);
