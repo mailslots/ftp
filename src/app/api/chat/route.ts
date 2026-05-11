@@ -499,6 +499,10 @@ function answerCameraPurchaseQuestion(question: string) {
   ].join("\n\n");
 }
 
+function cameraBuyingRequiredSummary() {
+  return "แนะนำให้เริ่มจากกล้องเปลี่ยนเลนส์ได้ก่อนค่ะ ถ้างบจำกัดให้ดู DSLR มือสอง และจัดเลนส์ให้ครบ 3 ระยะคือ กว้าง / ปกติ / แคบ โดยใช้งบรวมเป็นตัวตั้งก่อนเลือกรุ่นนะคะ";
+}
+
 function answerStudyPlanQuestion(question: string, chunks: KnowledgeChunk[]) {
   const yearMatch = question.match(/\u0e1b\u0e35(?:\u0e17\u0e35\u0e48)?\s*(\d)|\u0e0a\u0e31\u0e49\u0e19\u0e1b\u0e35(?:\u0e17\u0e35\u0e48)?\s*(\d)/);
   const year = yearMatch?.[1] || yearMatch?.[2];
@@ -1250,15 +1254,19 @@ export async function POST(request: Request) {
           ...cleanMessages,
           {
             role: "user",
-            content: `${lastUserMessage}\n\nช่วยตอบโดยใช้ฐานข้อมูลคำแนะนำซื้อกล้องก่อน แล้วเสริมความรู้ทั่วไปได้ ถ้าต้องอ้างรุ่น/ราคา ให้บอกว่าควรเช็กราคาปัจจุบันจากร้าน/เว็บขายของก่อนซื้อ`,
+            content: `${lastUserMessage}\n\nให้ขึ้นต้นคำตอบด้วยใจความนี้เสมอ: กล้องเปลี่ยนเลนส์ได้, DSLR มือสอง, เลนส์ครบช่วงกว้าง/ปกติ/แคบ, ใช้งบเป็นตัวตั้ง\nจากนั้นค่อยอธิบายโดยใช้ฐานข้อมูลคำแนะนำซื้อกล้องก่อน แล้วเสริมความรู้ทั่วไปได้ ถ้าต้องอ้างรุ่น/ราคา ให้บอกว่าควรเช็กราคาปัจจุบันจากร้าน/เว็บขายของก่อนซื้อ`,
           },
         ],
         chunks: cameraChunks,
         language,
         ...aiRouting,
       });
+      const answer = presentAnswer(result.answer, language);
+      const requiredSummary = language === "th" && !/กล้องเปลี่ยนเลนส์ได้|DSLR มือสอง|กว้าง.*ปกติ.*แคบ|ใช้งบ/.test(answer)
+        ? `${cameraBuyingRequiredSummary()}\n\n${answer}`
+        : answer;
       return chatResponse(request, clientKey, cooldownEnabled, cooldownLimit, {
-        answer: presentAnswer(result.answer, language),
+        answer: requiredSummary,
         provider: result.provider,
         sources: cameraChunks.map((chunk) => ({
           id: chunk.document_id,

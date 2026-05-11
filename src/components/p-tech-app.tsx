@@ -67,9 +67,9 @@ const deviceIdKey = "ptech-chat-device-id";
 const languageKey = "ptech-chat-response-language";
 
 const responseLanguages: { value: ResponseLanguage; label: string; shortLabel: string; mark: string }[] = [
-  { value: "th", label: "ภาษาไทย", shortLabel: "TH", mark: "TH" },
-  { value: "en", label: "English", shortLabel: "EN", mark: "EN" },
-  { value: "zh", label: "中文", shortLabel: "ZH", mark: "ZH" },
+  { value: "th", label: "ภาษาไทย", shortLabel: "TH", mark: "" },
+  { value: "en", label: "English", shortLabel: "EN", mark: "" },
+  { value: "zh", label: "中文", shortLabel: "ZH", mark: "" },
 ];
 
 const nineQQuestions = [
@@ -201,6 +201,47 @@ function renderChatContent(content: string, isUser: boolean) {
       </a>
     );
   });
+}
+
+function FlagIcon({ language }: { language: ResponseLanguage }) {
+  if (language === "th") {
+    return (
+      <span className="flex h-4 w-6 overflow-hidden rounded-[2px] shadow-[inset_0_0_0_1px_rgba(13,27,46,0.16)]" aria-hidden="true">
+        <span className="flex flex-1 flex-col">
+          <span className="h-[14%] bg-[#a51931]" />
+          <span className="h-[14%] bg-white" />
+          <span className="h-[44%] bg-[#2d2a4a]" />
+          <span className="h-[14%] bg-white" />
+          <span className="h-[14%] bg-[#a51931]" />
+        </span>
+      </span>
+    );
+  }
+
+  if (language === "en") {
+    return (
+      <span className="relative h-4 w-6 overflow-hidden rounded-[2px] bg-[#012169] shadow-[inset_0_0_0_1px_rgba(13,27,46,0.16)]" aria-hidden="true">
+        <span className="absolute left-[-3px] top-[7px] h-[2px] w-8 rotate-[34deg] bg-white" />
+        <span className="absolute left-[-3px] top-[7px] h-[2px] w-8 -rotate-[34deg] bg-white" />
+        <span className="absolute left-[-3px] top-[7px] h-[1px] w-8 rotate-[34deg] bg-[#c8102e]" />
+        <span className="absolute left-[-3px] top-[7px] h-[1px] w-8 -rotate-[34deg] bg-[#c8102e]" />
+        <span className="absolute left-0 top-[6px] h-1 w-full bg-white" />
+        <span className="absolute left-[10px] top-0 h-full w-1 bg-white" />
+        <span className="absolute left-0 top-[7px] h-[2px] w-full bg-[#c8102e]" />
+        <span className="absolute left-[11px] top-0 h-full w-[2px] bg-[#c8102e]" />
+      </span>
+    );
+  }
+
+  return (
+    <span className="relative h-4 w-6 overflow-hidden rounded-[2px] bg-[#de2910] shadow-[inset_0_0_0_1px_rgba(13,27,46,0.16)]" aria-hidden="true">
+      <span className="absolute left-[4px] top-[2px] text-[8px] leading-none text-[#ffde00]">★</span>
+      <span className="absolute left-[12px] top-[2px] h-[2px] w-[2px] rounded-full bg-[#ffde00]" />
+      <span className="absolute left-[15px] top-[5px] h-[2px] w-[2px] rounded-full bg-[#ffde00]" />
+      <span className="absolute left-[15px] top-[9px] h-[2px] w-[2px] rounded-full bg-[#ffde00]" />
+      <span className="absolute left-[12px] top-[12px] h-[2px] w-[2px] rounded-full bg-[#ffde00]" />
+    </span>
+  );
 }
 
 function toDateTimeLocal(value: string | null) {
@@ -725,15 +766,7 @@ export function PTechApp() {
                   aria-label={language.label}
                   title={language.label}
                 >
-                  <span className={`inline-flex h-5 min-w-7 items-center justify-center rounded-sm px-1 text-[10px] font-bold leading-none ${
-                    language.value === "th"
-                      ? "bg-[#0d1b2e] text-white"
-                      : language.value === "en"
-                        ? "bg-[#eef3f8] text-[#0d1b2e]"
-                        : "bg-[#dc2626] text-white"
-                  }`} aria-hidden="true">
-                    {language.mark}
-                  </span>
+                  <FlagIcon language={language.value} />
                   <span className="hidden sm:inline">{language.shortLabel}</span>
                 </button>
               );
