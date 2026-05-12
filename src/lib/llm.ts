@@ -359,7 +359,7 @@ export async function askModel(input: {
     .join("\n\n");
 
   const geminiApiKey = process.env.GEMINI_API_KEY;
-  const geminiModels = configuredList(process.env.GEMINI_MODELS || process.env.GEMINI_MODEL, GEMINI_MODELS);
+  const geminiModels = configuredList(process.env.GEMINI_MODELS, GEMINI_MODELS);
   const groqApiKey = process.env.GROQ_API_KEY;
   const groqModels = configuredList(process.env.GROQ_MODELS, GROQ_MODELS);
   const groqApiBase = process.env.GROQ_API_BASE || "https://api.groq.com/openai/v1";
