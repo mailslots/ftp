@@ -1,4 +1,11 @@
-import { KNOWLEDGE_BUCKET, getSupabaseAdmin } from "@/lib/supabase";
+import {
+  KNOWLEDGE_BUCKET,
+  KNOWLEDGE_CHUNKS_TABLE,
+  KNOWLEDGE_DOCUMENTS_QUERY_PREFIX,
+  KNOWLEDGE_DOCUMENTS_RELATION,
+  KNOWLEDGE_DOCUMENTS_TABLE,
+  getSupabaseAdmin,
+} from "@/lib/supabase";
 import { AI_USAGE_DOCUMENT_TITLE } from "@/lib/ai-usage";
 import { SETTINGS_DOCUMENT_TITLE } from "@/lib/app-settings";
 import type { KnowledgeChunk, KnowledgeDocument } from "@/lib/types";
@@ -61,7 +68,7 @@ export async function listDocuments() {
   await deleteExpiredDocuments();
 
   const { data, error } = await supabase
-    .from("knowledge_documents")
+    .from(KNOWLEDGE_DOCUMENTS_TABLE)
     .select("*")
     .is("deleted_at", null)
     .neq("title", SETTINGS_DOCUMENT_TITLE)
@@ -86,7 +93,7 @@ async function insertDocument(input: {
 }) {
   const supabase = getSupabaseAdmin();
   const { data: document, error: insertError } = await supabase
-    .from("knowledge_documents")
+    .from(KNOWLEDGE_DOCUMENTS_TABLE)
     .insert({
       title: input.title,
       source_type: input.sourceType,
@@ -105,7 +112,7 @@ async function insertDocument(input: {
 
   const chunks = makeChunks([input.title, input.notes, input.extractedText].filter(Boolean).join("\n\n"));
   if (chunks.length) {
-    const { error: chunkError } = await supabase.from("knowledge_chunks").insert(
+    const { error: chunkError } = await supabase.from(KNOWLEDGE_CHUNKS_TABLE).insert(
       chunks.map((content, index) => ({
         document_id: document.id,
         chunk_index: index,
@@ -176,7 +183,7 @@ export async function createKnowledgeDocument(input: {
 export async function deleteDocument(id: string) {
   const supabase = getSupabaseAdmin();
   const { data: document, error: findError } = await supabase
-    .from("knowledge_documents")
+    .from(KNOWLEDGE_DOCUMENTS_TABLE)
     .select("*")
     .eq("id", id)
     .single();
@@ -186,7 +193,7 @@ export async function deleteDocument(id: string) {
     await supabase.storage.from(KNOWLEDGE_BUCKET).remove([document.file_path]);
   }
 
-  const { error } = await supabase.from("knowledge_documents").delete().eq("id", id);
+  const { error } = await supabase.from(KNOWLEDGE_DOCUMENTS_TABLE).delete().eq("id", id);
   if (error) throw error;
 }
 
@@ -203,7 +210,7 @@ export async function updateTextDocument(input: {
   if (!text) throw new Error("กรุณาใส่ข้อความ");
 
   const { data: document, error } = await supabase
-    .from("knowledge_documents")
+    .from(KNOWLEDGE_DOCUMENTS_TABLE)
     .update({
       title: input.title || "ข้อความจากแอดมิน",
       source_type: "text",
@@ -220,10 +227,10 @@ export async function updateTextDocument(input: {
 
   if (error) throw error;
 
-  await supabase.from("knowledge_chunks").delete().eq("document_id", input.id);
+  await supabase.from(KNOWLEDGE_CHUNKS_TABLE).delete().eq("document_id", input.id);
   const chunks = makeChunks([input.title, input.notes, text].filter(Boolean).join("\n\n"));
   if (chunks.length) {
-    const { error: chunkError } = await supabase.from("knowledge_chunks").insert(
+    const { error: chunkError } = await supabase.from(KNOWLEDGE_CHUNKS_TABLE).insert(
       chunks.map((content, index) => ({
         document_id: input.id,
         chunk_index: index,
@@ -239,7 +246,7 @@ export async function updateTextDocument(input: {
 export async function deleteExpiredDocuments() {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("knowledge_documents")
+    .from(KNOWLEDGE_DOCUMENTS_TABLE)
     .select("id,file_path")
     .is("deleted_at", null)
     .not("expires_at", "is", null)
@@ -255,7 +262,7 @@ export async function deleteExpiredDocuments() {
   }
 
   const { error: deleteError } = await supabase
-    .from("knowledge_documents")
+    .from(KNOWLEDGE_DOCUMENTS_TABLE)
     .delete()
     .in(
       "id",
@@ -271,11 +278,11 @@ export async function searchKnowledge(query: string) {
   await deleteExpiredDocuments();
 
   const { data, error } = await supabase
-    .from("knowledge_chunks")
-    .select("*, knowledge_documents!inner(id,title,source_type,expires_at)")
-    .is("knowledge_documents.deleted_at", null)
-    .neq("knowledge_documents.title", SETTINGS_DOCUMENT_TITLE)
-    .neq("knowledge_documents.title", AI_USAGE_DOCUMENT_TITLE)
+    .from(KNOWLEDGE_CHUNKS_TABLE)
+    .select(`*, ${KNOWLEDGE_DOCUMENTS_RELATION}` as string)
+    .is(`${KNOWLEDGE_DOCUMENTS_QUERY_PREFIX}.deleted_at`, null)
+    .neq(`${KNOWLEDGE_DOCUMENTS_QUERY_PREFIX}.title`, SETTINGS_DOCUMENT_TITLE)
+    .neq(`${KNOWLEDGE_DOCUMENTS_QUERY_PREFIX}.title`, AI_USAGE_DOCUMENT_TITLE)
     .order("created_at", { ascending: false })
     .limit(300);
 
@@ -394,7 +401,7 @@ export async function searchKnowledge(query: string) {
 
   const now = Date.now();
 
-  return ((data ?? []) as KnowledgeChunk[])
+  return ((data ?? []) as unknown as KnowledgeChunk[])
     .filter((chunk) => {
       const expiresAt = chunk.knowledge_documents?.expires_at;
       return !expiresAt || new Date(expiresAt).getTime() > now;
@@ -419,25 +426,25 @@ export async function getStudyPlanChunks(year: string, term: string) {
   await deleteExpiredDocuments();
 
   let query = supabase
-    .from("knowledge_chunks")
-    .select("*, knowledge_documents!inner(id,title,source_type,expires_at)")
-    .is("knowledge_documents.deleted_at", null)
-    .neq("knowledge_documents.title", SETTINGS_DOCUMENT_TITLE)
-    .neq("knowledge_documents.title", AI_USAGE_DOCUMENT_TITLE)
-    .like("knowledge_documents.title", `%year ${year}%`)
-    .like("knowledge_documents.title", "FTP study plan%")
+    .from(KNOWLEDGE_CHUNKS_TABLE)
+    .select(`*, ${KNOWLEDGE_DOCUMENTS_RELATION}` as string)
+    .is(`${KNOWLEDGE_DOCUMENTS_QUERY_PREFIX}.deleted_at`, null)
+    .neq(`${KNOWLEDGE_DOCUMENTS_QUERY_PREFIX}.title`, SETTINGS_DOCUMENT_TITLE)
+    .neq(`${KNOWLEDGE_DOCUMENTS_QUERY_PREFIX}.title`, AI_USAGE_DOCUMENT_TITLE)
+    .like(`${KNOWLEDGE_DOCUMENTS_QUERY_PREFIX}.title`, `%year ${year}%`)
+    .like(`${KNOWLEDGE_DOCUMENTS_QUERY_PREFIX}.title`, "FTP study plan%")
     .order("created_at", { ascending: true })
     .limit(12);
 
   if (term) {
-    query = query.like("knowledge_documents.title", `%term ${term}%`);
+    query = query.like(`${KNOWLEDGE_DOCUMENTS_QUERY_PREFIX}.title`, `%term ${term}%`);
   }
 
   const { data, error } = await query;
   if (error) throw error;
 
   const now = Date.now();
-  return ((data ?? []) as KnowledgeChunk[]).filter((chunk) => {
+  return ((data ?? []) as unknown as KnowledgeChunk[]).filter((chunk) => {
     const expiresAt = chunk.knowledge_documents?.expires_at;
     return !expiresAt || new Date(expiresAt).getTime() > now;
   });

@@ -1,4 +1,4 @@
-import { getSupabaseAdmin } from "@/lib/supabase";
+import { KNOWLEDGE_DOCUMENTS_TABLE, getSupabaseAdmin } from "@/lib/supabase";
 import type { AppSettings } from "@/lib/types";
 
 export const SETTINGS_DOCUMENT_TITLE = "__ptech_app_settings__";
@@ -28,7 +28,7 @@ function normalizeSettings(value: unknown): AppSettings {
 export async function getAppSettings(): Promise<AppSettings> {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("knowledge_documents")
+    .from(KNOWLEDGE_DOCUMENTS_TABLE)
     .select("extracted_text")
     .eq("title", SETTINGS_DOCUMENT_TITLE)
     .is("deleted_at", null)
@@ -51,7 +51,7 @@ export async function updateAppSettings(input: Partial<AppSettings>) {
   const text = JSON.stringify(next);
 
   const { data: existing, error: findError } = await supabase
-    .from("knowledge_documents")
+    .from(KNOWLEDGE_DOCUMENTS_TABLE)
     .select("id")
     .eq("title", SETTINGS_DOCUMENT_TITLE)
     .is("deleted_at", null)
@@ -61,7 +61,7 @@ export async function updateAppSettings(input: Partial<AppSettings>) {
 
   if (existing?.id) {
     const { error } = await supabase
-      .from("knowledge_documents")
+      .from(KNOWLEDGE_DOCUMENTS_TABLE)
       .update({
         source_type: "text",
         mime_type: "application/json",
@@ -76,7 +76,7 @@ export async function updateAppSettings(input: Partial<AppSettings>) {
     return next;
   }
 
-  const { error } = await supabase.from("knowledge_documents").insert({
+  const { error } = await supabase.from(KNOWLEDGE_DOCUMENTS_TABLE).insert({
     title: SETTINGS_DOCUMENT_TITLE,
     source_type: "text",
     mime_type: "application/json",

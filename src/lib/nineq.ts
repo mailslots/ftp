@@ -1,4 +1,4 @@
-import { getSupabaseAdmin } from "@/lib/supabase";
+import { NINEQ_ASSESSMENTS_TABLE, getSupabaseAdmin } from "@/lib/supabase";
 
 export type NineQAssessment = {
   id: string;
@@ -51,7 +51,7 @@ export async function createNineQAssessment(input: {
   const { severity, label } = severityFromScore(totalScore);
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("nineq_assessments")
+    .from(NINEQ_ASSESSMENTS_TABLE)
     .insert({
       client_id: cleanText(input.clientId, 160),
       total_score: totalScore,
@@ -78,7 +78,7 @@ export async function updateNineQContact(input: {
 }) {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("nineq_assessments")
+    .from(NINEQ_ASSESSMENTS_TABLE)
     .update({
       voluntary_name: cleanText(input.name),
       voluntary_year: cleanText(input.year, 40),
@@ -97,7 +97,7 @@ export async function updateNineQContact(input: {
 export async function listNineQAssessments() {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("nineq_assessments")
+    .from(NINEQ_ASSESSMENTS_TABLE)
     .select("*")
     .eq("is_at_risk", true)
     .order("created_at", { ascending: false })

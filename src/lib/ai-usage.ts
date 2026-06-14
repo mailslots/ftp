@@ -1,5 +1,5 @@
 import { getAiModelSequence } from "@/lib/llm";
-import { getSupabaseAdmin } from "@/lib/supabase";
+import { KNOWLEDGE_DOCUMENTS_TABLE, getSupabaseAdmin } from "@/lib/supabase";
 import type { AppSettings } from "@/lib/types";
 
 export const AI_USAGE_DOCUMENT_TITLE = "__ptech_ai_usage__";
@@ -55,7 +55,7 @@ function totalForPeriod(store: UsageStore, period: AiUsagePeriod, model: string)
 async function readUsageDocument() {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
-    .from("knowledge_documents")
+    .from(KNOWLEDGE_DOCUMENTS_TABLE)
     .select("id,extracted_text")
     .eq("title", AI_USAGE_DOCUMENT_TITLE)
     .is("deleted_at", null)
@@ -70,7 +70,7 @@ async function writeUsageStore(store: UsageStore, existingId?: string) {
   const text = JSON.stringify(store);
   if (existingId) {
     const { error } = await supabase
-      .from("knowledge_documents")
+      .from(KNOWLEDGE_DOCUMENTS_TABLE)
       .update({
         source_type: "text",
         mime_type: "application/json",
@@ -85,7 +85,7 @@ async function writeUsageStore(store: UsageStore, existingId?: string) {
     return;
   }
 
-  const { error } = await supabase.from("knowledge_documents").insert({
+  const { error } = await supabase.from(KNOWLEDGE_DOCUMENTS_TABLE).insert({
     title: AI_USAGE_DOCUMENT_TITLE,
     source_type: "text",
     mime_type: "application/json",
